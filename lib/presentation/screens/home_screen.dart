@@ -8,20 +8,41 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final passwordsAsync = ref.watch(passwordsProvider);
+    final passwordsAsync = ref.watch(filteredPasswordsProvider);
+    final isSearchVisible = ref.watch(isSearchVisibleProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Passwords'),
+        title: isSearchVisible
+            ? TextField(
+                autofocus: true,
+                style: const TextStyle(color: Colors.white), // Assuming dark app bar or handling contrast
+                decoration: const InputDecoration(
+                  hintText: 'Search...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.white70),
+                ),
+                onChanged: (value) {
+                  ref.read(searchQueryProvider.notifier).state = value;
+                },
+              )
+            : const Text('Passwords'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
+            icon: Icon(isSearchVisible ? Icons.close : Icons.search),
+            onPressed: () {
+              ref.read(isSearchVisibleProvider.notifier).state = !isSearchVisible;
+              if (isSearchVisible) {
+                // Determine if we should clear query on close
+                ref.read(searchQueryProvider.notifier).state = '';
+              }
+            },
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {},
-          ),
+          if (!isSearchVisible)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => context.push('/settings'),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

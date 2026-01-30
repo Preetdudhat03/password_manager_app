@@ -16,6 +16,10 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   bool _isCreatingNew = false;
   bool _isLoading = true;
   String? _error;
+  
+  // Biometrics
+  bool _canCheckBiometrics = false;
+  bool _useBiometrics = false; // For setup checkbox
 
   @override
   void initState() {
@@ -25,13 +29,30 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
 
   Future<void> _checkOnboardingStatus() async {
     final secureStorage = ref.read(secureStorageServiceProvider);
-    final hasKey = await secureStorage.hasMasterKey();
+    final biometricService = ref.read(biometricServiceProvider);
     
+    final hasKey = await secureStorage.hasMasterKey();
+    final canCheck = await biometricService.isBiometricAvailable();
+    
+    // Check if biometrics was previously enabled
+    final biometricsEnabledStr = await secureStorage.read(key: 'biometrics_enabled');
+    final biometricsEnabled = biometricsEnabledStr == 'true';
+
     if (mounted) {
       setState(() {
         _isCreatingNew = !hasKey;
+        _canCheckBiometrics = canCheck;
         _isLoading = false;
+        // If not creating new, we might auto-trigger biometric if enabled
+        if (!hasKey) {
+             _useBiometrics = canCheck; // Default to true if available during setup
+        }
       });
+      
+      if (hasKey && biometricsEnabled && canCheck) {
+        // Optional: Auto-trigger biometric prompt
+        // _handleBiometricUnlock(); 
+      }
     }
   }
 
@@ -55,34 +76,17 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
         }
         
         // Create new master key
-        // 1. Hash the password for verification
         final passwordHash = encryptionService.hashPassword(password);
-        
-        // 2. Generate a random Master Key
         final masterKey = encryptionService.generateRandomKey();
         
-        // 3. Encrypt the Master Key with the Password (derived key)
-        // For simplicity in this demo, we are storing the password hash and the master key separately.
-        // In a real app, we would encrypt the Master Key with the derived key from the password.
-        // Let's stick to the requirement: "Unlock using master password... decrypt using KeyStore-wrapped key"
-        // Actually, if we use KeyStore (SecureStorage), we can store the Master Key there.
-        // But we need to verify the user knows the password.
-        
-        // Let's store the Master Key in Secure Storage, but only allow access if we verify the password.
-        // Wait, if we store it in Secure Storage, anyone with root access (or biometric) can get it?
-        // Secure Storage is encrypted.
-        
-        // Let's follow a standard pattern:
-        // Store Hash(Password) to verify password.
-        // Store Encrypted(MasterKey, Key=Derived(Password)).
-        // When using Biometrics, we store MasterKey in SecureStorage (protected by auth).
-        
-        // For this MVP step:
-        // 1. Store Hash(Password) in Secure Storage (to verify login).
-        // 2. Store Master Key in Secure Storage (this is effectively KeyStore wrapped).
-        
+        // Save Everything
         await secureStorage.write(key: 'master_password_hash', value: passwordHash);
         await secureStorage.write(key: 'master_key', value: masterKey.base64);
+        
+        // Save Biometric Preference
+        if (_canCheckBiometrics) {
+           await secureStorage.write(key: 'biometrics_enabled', value: _useBiometrics.toString());
+        }
         
         ref.read(masterKeyProvider.notifier).state = masterKey.base64;
 
@@ -95,7 +99,6 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
         final inputHash = encryptionService.hashPassword(password);
         
         if (storedHash == inputHash) {
-          // Retrieve Master Key
           final masterKey = await secureStorage.read(key: 'master_key');
           ref.read(masterKeyProvider.notifier).state = masterKey;
           
@@ -108,6 +111,29 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
       setState(() => _error = e.toString());
     }
   }
+  
+  Future<void> _handleBiometricUnlock() async {
+    final biometricService = ref.read(biometricServiceProvider);
+    final secureStorage = ref.read(secureStorageServiceProvider);
+    
+    final authenticated = await biometricService.authenticate();
+    if (authenticated) {
+      try {
+        final masterKey = await secureStorage.read(key: 'master_key');
+        if (masterKey != null) {
+           ref.read(masterKeyProvider.notifier).state = masterKey;
+           if (mounted) context.go('/home');
+        } else {
+           setState(() => _error = 'Master Key not found. Please reset app.');
+        }
+      } catch (e) {
+         setState(() => _error = 'Error retrieving key: $e');
+      }
+    } else {
+      // Failed authentication (canceled or error)
+      // Usually UI feedback handles itself, but we can set error
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,64 +143,72 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(
-                Icons.lock_outline,
-                size: 64,
-              ),
-              const SizedBox(height: 32),
-              Text(
-                _isCreatingNew ? 'Create Master Password' : 'Welcome Back',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Master Password',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.key),
-                  errorText: _error,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.lock_outline,
+                  size: 64,
                 ),
-              ),
-              if (_isCreatingNew) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
+                Text(
+                  _isCreatingNew ? 'Create Master Password' : 'Welcome Back',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 32),
                 TextField(
-                  controller: _confirmPasswordController,
+                  controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.check_circle_outline),
+                  decoration: InputDecoration(
+                    labelText: 'Master Password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.key),
+                    errorText: _error,
                   ),
                 ),
-              ],
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _handleUnlock,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(_isCreatingNew ? 'Create & Unlock' : 'Unlock'),
+                if (_isCreatingNew) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _confirmPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm Password',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.check_circle_outline),
+                    ),
+                  ),
+                  if (_canCheckBiometrics) ...[
+                     const SizedBox(height: 16),
+                     SwitchListTile(
+                       title: const Text('Enable Biometric Unlock'),
+                       value: _useBiometrics,
+                       onChanged: (val) => setState(() => _useBiometrics = val),
+                     ),
+                  ]
+                ],
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: _handleUnlock,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(_isCreatingNew ? 'Create & Unlock' : 'Unlock'),
+                  ),
                 ),
-              ),
-              if (!_isCreatingNew) ...[
-                const SizedBox(height: 16),
-                TextButton.icon(
-                  onPressed: () {
-                    // TODO: Implement biometric unlock
-                  },
-                  icon: const Icon(Icons.fingerprint),
-                  label: const Text('Use Biometrics'),
-                ),
+                if (!_isCreatingNew && _canCheckBiometrics) ...[
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _handleBiometricUnlock,
+                    icon: const Icon(Icons.fingerprint),
+                    label: const Text('Use Biometrics'),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

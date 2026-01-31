@@ -50,34 +50,52 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
     _passwordController.text = generated;
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
       final now = DateTime.now();
       
-      if (widget.itemToEdit != null) {
-        // Edit
-        final updatedItem = widget.itemToEdit!.copyWith(
-          title: _titleController.text,
-          username: _usernameController.text,
-          password: _passwordController.text,
-          notes: _notesController.text,
-          updatedAt: now,
-        );
-        ref.read(vaultListProvider.notifier).update(updatedItem);
-      } else {
-        // Add
-        final newItem = VaultItem(
-          id: const Uuid().v4(),
-          title: _titleController.text,
-          username: _usernameController.text,
-          password: _passwordController.text,
-          notes: _notesController.text,
-          createdAt: now,
-          updatedAt: now,
-        );
-        ref.read(vaultListProvider.notifier).add(newItem);
+      try {
+        if (widget.itemToEdit != null) {
+          // Edit
+          final updatedItem = widget.itemToEdit!.copyWith(
+            title: _titleController.text,
+            username: _usernameController.text,
+            password: _passwordController.text,
+            notes: _notesController.text,
+            updatedAt: now,
+          );
+          await ref.read(vaultListProvider.notifier).update(updatedItem);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Password updated successfully'), backgroundColor: Colors.green),
+            );
+          }
+        } else {
+          // Add
+          final newItem = VaultItem(
+            id: const Uuid().v4(),
+            title: _titleController.text,
+            username: _usernameController.text,
+            password: _passwordController.text,
+            notes: _notesController.text,
+            createdAt: now,
+            updatedAt: now,
+          );
+          await ref.read(vaultListProvider.notifier).add(newItem);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Password added successfully'), backgroundColor: Colors.green),
+            );
+          }
+        }
+        if (mounted) context.pop();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving password: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
-      context.pop();
     }
   }
 

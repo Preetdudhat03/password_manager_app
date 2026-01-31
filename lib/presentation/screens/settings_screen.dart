@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/secure_storage_service.dart';
 import '../../core/services/biometric_service.dart';
+import '../../core/services/backup_service.dart';
+import '../../core/encryption/encryption_service.dart';
+import '../../core/services/vault_service_locator.dart';
 import '../state/theme_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -253,6 +256,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           
           const Divider(),
+
+          // Data Section
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('Data', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.download),
+            title: const Text('Backup Vault'),
+            subtitle: const Text('Export encrypted backup file'),
+            onTap: () => _showBackupDialog(),
+          ),
+
+          const Divider(),
           
           const Padding(
             padding: EdgeInsets.all(16),
@@ -266,5 +283,81 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
-}
 
+  Future<void> _showBackupDialog() async {
+    final passwordController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Backup Vault'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter Master Password to encrypt and export your vault.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Master Password'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              final password = passwordController.text;
+              Navigator.pop(context); // Close dialog
+
+              setState(() => _isLoading = true);
+              
+              // 1. Verify Password
+              try {
+                // We use verifyMasterPassword just to check correctness
+                final hiveKey = await _storageService.verifyMasterPassword(password);
+                if (hiveKey != null) {
+                  // 2. Perform Backup
+                  // We need to instantiate BackupService. 
+                  // It needs Repo and EncryptionService.
+                  // We can get Repo from ref.read(passwordRepositoryProvider) BUT that provider requires globalVaultBox to be open.
+                  // Since we are in Settings, we assume Vault is open (User is logged in).
+                  // But let's be safe.
+                  
+                  final repo = ref.read(passwordRepositoryProvider);
+                  // We need a fresh instance of EncryptionService, usually instantiated directly or via provider.
+                  // In this project we instantiate it directly in Service classes often.
+                  final encryptionService = EncryptionServiceImpl(); // We need to import implementation or interface
+                  
+                  final backupService = BackupService(repo, encryptionService);
+                  await backupService.createEncryptedBackup(password);
+                  
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Backup ready to share'), backgroundColor: Colors.green),
+                    );
+                  }
+                } else {
+                   if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Incorrect Password'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Backup failed: $e'), backgroundColor: Colors.red),
+                    );
+                }
+              } finally {
+                if (mounted) setState(() => _isLoading = false);
+              }
+            },
+            child: const Text('Export'),
+          ),
+        ],
+      ),
+    );
+  }
+
+}

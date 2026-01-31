@@ -1,32 +1,42 @@
 import 'package:hive/hive.dart';
-import '../../domain/entities/password_entry.dart';
+import '../../domain/entities/vault_item.dart';
 import '../../domain/repositories/password_repository.dart';
-import '../models/password_model.dart';
+import '../../core/services/vault_service_locator.dart'; // Import globalVaultBox
 
 class PasswordRepositoryImpl implements PasswordRepository {
-  final Box<PasswordModel> _box;
+  // We use a getter to access the global box dynamically.
+  // This prevents issues where the Repository holds a reference to a CLOSED box
+  // after a logout/login cycle.
+  Box<VaultItem> get _box {
+    if (globalVaultBox == null) {
+      throw Exception('Vault is locked (Box not open)');
+    }
+    if (!globalVaultBox!.isOpen) {
+       throw Exception('Vault is closed');
+    }
+    return globalVaultBox!;
+  }
 
-  PasswordRepositoryImpl(this._box);
+  // Remove constructor
+  PasswordRepositoryImpl(); 
 
   @override
-  Future<List<PasswordEntry>> getAllPasswords() async {
+  Future<List<VaultItem>> getAllItems() async {
     return _box.values.toList();
   }
 
   @override
-  Future<void> addPassword(PasswordEntry entry) async {
-    final model = PasswordModel.fromEntity(entry);
-    await _box.put(entry.id, model);
+  Future<void> addItem(VaultItem item) async {
+    await _box.put(item.id, item);
   }
 
   @override
-  Future<void> updatePassword(PasswordEntry entry) async {
-    final model = PasswordModel.fromEntity(entry);
-    await _box.put(entry.id, model);
+  Future<void> updateItem(VaultItem item) async {
+    await _box.put(item.id, item);
   }
 
   @override
-  Future<void> deletePassword(String id) async {
+  Future<void> deleteItem(String id) async {
     await _box.delete(id);
   }
 }

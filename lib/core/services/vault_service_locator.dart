@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../domain/entities/vault_item.dart';
 import '../../domain/repositories/password_repository.dart';
+import '../../data/repositories/password_repository_impl.dart';
 
 // Global variable to hold the box once opened
 Box<VaultItem>? globalVaultBox;
@@ -14,5 +15,5 @@ final passwordRepositoryProvider = Provider<PasswordRepository>((ref) {
     // this check is primarily a fail-safe.
     throw Exception('Vault not opened yet');
   }
-  return PasswordRepositoryImpl(globalVaultBox!);
+  return PasswordRepositoryImpl();
 });

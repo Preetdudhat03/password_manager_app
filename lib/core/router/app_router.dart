@@ -1,5 +1,7 @@
-import 'package:go_router/go_router.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/setup_screen.dart';
 import '../../presentation/screens/unlock_screen.dart';
@@ -7,10 +9,32 @@ import '../../presentation/screens/home_screen.dart';
 import '../../presentation/screens/settings_screen.dart';
 import '../../presentation/screens/add_password_screen.dart';
 import '../../domain/entities/vault_item.dart';
+import '../../presentation/state/auth_state.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  // Use refreshListenable to avoid rebuilding GoRouter on auth changes
+  final authNotifier = ref.watch(authProvider.notifier);
+
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: GoRouterRefreshStream(authNotifier.stream),
+    redirect: (context, state) {
+      // Use ref.read here to get current value without subscription
+      final isAuth = ref.read(authProvider);
+      final path = state.uri.toString();
+      
+      // Public routes that don't require ensuring vault is open
+      if (path == '/' || path == '/setup' || path == '/unlock') {
+         return null;
+      }
+      
+      // If we are here, we are requesting a protected route
+      if (!isAuth) {
+        // Vault closed/locked -> Redirect to unlock
+        return '/unlock';
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/',
@@ -46,3 +70,20 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

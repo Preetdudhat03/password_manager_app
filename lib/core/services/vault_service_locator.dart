@@ -8,12 +8,8 @@ import '../../data/repositories/password_repository_impl.dart';
 Box<VaultItem>? globalVaultBox;
 
 final passwordRepositoryProvider = Provider<PasswordRepository>((ref) {
-  if (globalVaultBox == null) {
-    // This might happen if the provider is read before the vault is unlocked.
-    // In a real app, we would use a FutureProvider or similar.
-    // However, since we block navigation at the Splash/Unlock screen until the vault is ready,
-    // this check is primarily a fail-safe.
-    throw Exception('Vault not opened yet');
-  }
+  // We return the implementation directly. 
+  // The implementation checks for the opened box internally when methods are called.
+  // This prevents crashes when the provider is rebuilt during logout (when box is null).
   return PasswordRepositoryImpl();
 });

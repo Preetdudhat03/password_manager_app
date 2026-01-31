@@ -47,7 +47,7 @@ class _PasswordManagerAppState extends ConsumerState<PasswordManagerApp> with Wi
     // 1️⃣ Memory Hygiene & Auto-Lock
     // When app goes to background (paused) or is inactive (multitasking view),
     // we lock the vault immediately to prevent data exposure.
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused) {
       // Check if logged in first to avoid redundant calls? 
       // Logout is idempotent usually, but let's be safe.
       // We use 'read' because we are inside a callback, strictly speaking simple 'read' is fine here.

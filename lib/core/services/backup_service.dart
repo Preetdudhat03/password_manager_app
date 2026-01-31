@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cryptography/cryptography.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -35,14 +36,20 @@ class BackupService {
     // We'll just stick to [16 bytes salt][Encrypted Data] for simplicity
     final fileBytes = [...salt, ...encryptedBytes];
 
-    // 6. Write to File
-    final dir = await getTemporaryDirectory();
+    // 6. Save Dialog (User Choice)
     final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    final file = File('${dir.path}/securevault_backup_$timestamp.svb'); // .svb = SecureVault Backup
-    await file.writeAsBytes(fileBytes);
+    final fileName = 'securevault_backup_$timestamp.svb';
 
-    // 7. Share
-    await Share.shareXFiles([XFile(file.path)], text: 'SecureVault Backup');
+    final String? outputPath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save Backup File',
+      fileName: fileName,
+      type: FileType.any,
+    );
+
+    if (outputPath != null) {
+      final file = File(outputPath);
+      await file.writeAsBytes(fileBytes);
+    } // else user cancelled
   }
 
   Map<String, dynamic> _itemToMap(VaultItem item) {
@@ -55,5 +62,39 @@ class BackupService {
       'createdAt': item.createdAt.toIso8601String(),
       'updatedAt': item.updatedAt.toIso8601String(),
     };
+  }
+
+  Future<List<VaultItem>> restoreBackup(File file, String password) async {
+    final bytes = await file.readAsBytes();
+    if (bytes.length < 16) throw Exception('Invalid backup file');
+
+    // 1. Extract Salt
+    final salt = bytes.sublist(0, 16);
+    final encryptedPayload = bytes.sublist(16);
+
+    // 2. Derive Key
+    final key = await _encryptionService.deriveKey(password, salt);
+
+    // 3. Decrypt
+    try {
+      final jsonString = await _encryptionService.decrypt(encryptedPayload, key);
+      final List<dynamic> jsonList = jsonDecode(jsonString);
+      
+      return jsonList.map((e) => _mapToItem(e)).toList();
+    } catch (e) {
+      throw Exception('Decryption failed. Wrong password?');
+    }
+  }
+
+  VaultItem _mapToItem(Map<String, dynamic> map) {
+    return VaultItem(
+      id: map['id'],
+      title: map['title'],
+      username: map['username'],
+      password: map['password'],
+      notes: map['notes'],
+      createdAt: DateTime.parse(map['createdAt']),
+      updatedAt: DateTime.parse(map['updatedAt']),
+    );
   }
 }

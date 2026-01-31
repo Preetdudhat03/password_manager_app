@@ -1,6 +1,13 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/services/secure_storage_service.dart';
+import '../../core/encryption/encryption_service.dart';
+import '../../core/services/backup_service.dart';
+import '../../data/repositories/password_repository_impl.dart';
+import '../../domain/entities/vault_item.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -19,6 +26,9 @@ class _SetupScreenState extends State<SetupScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
+      // Ensure we start fresh
+      await Hive.deleteBoxFromDisk('vault');
+
       final storage = SecureStorageService(); // Should be provded by DI in real app
       await storage.setMasterPassword(_passwordController.text);
       
@@ -95,12 +105,116 @@ class _SetupScreenState extends State<SetupScreen> {
                         ? const CircularProgressIndicator()
                         : const Text('Create Vault'),
                     ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: _isLoading ? null : _restoreFromBackup,
+                      child: const Text('Restore from Backup'),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _restoreFromBackup() async {
+    // 1. Pick File
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null) return;
+    
+    final file = File(result.files.single.path!);
+    
+    // 2. Ask for Backup Password
+    final backupPass = await _promptPassword(context, 'Enter Backup Password');
+    if (backupPass == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 3. Decrypt
+      // We need services. In real app, use DI.
+      final crypto = EncryptionServiceImpl();
+      final backup = BackupService(PasswordRepositoryImpl(), crypto);
+      
+      final items = await backup.restoreBackup(file, backupPass);
+      
+      // 4. Ask for New Master Password (to encrypt the vault on this device)
+      if (mounted) {
+        setState(() => _isLoading = false); // pause loading to show dialog
+        final newMasterPass = await _promptPassword(context, 'Set New Master Password');
+        if (newMasterPass == null) return; // Abort
+        
+        setState(() => _isLoading = true); // resume
+
+        // 5. Initialize Vault
+        // Clean up old data to avoid key mismatch
+        await Hive.deleteBoxFromDisk('vault');
+        
+        final storage = SecureStorageService();
+        await storage.setMasterPassword(newMasterPass);
+        
+        // 6. Login (Open Box)
+        // We need to verify to get the key and open box.
+        // We can reuse AuthNotifier logic or manually do it.
+        // Let's use AuthNotifier if possible, or manual.
+        // Manual: Verify -> Get Key -> Open Box -> Set Global -> Add Items.
+        
+        final hiveKey = await storage.verifyMasterPassword(newMasterPass);
+        // We must Open Box manually here to seed it.
+        // But usually AuthNotifier handles this.
+        // Let's call AuthNotifier.login
+        // We need `ref` access. SetupScreen is StatefulWidget, NOT ConsumerStatefulWidget.
+        // We should convert it to Consumer.
+        // OR just rely on manual box open for seeding.
+        
+        final key = hiveKey;
+        if (key != null) {
+          // Open box temporarily to seed
+           final box = await Hive.openBox<VaultItem>(
+            'vault',
+            encryptionCipher: HiveAesCipher(key),
+          );
+          
+          for (var item in items) {
+            await box.put(item.id, item);
+          }
+           await box.close(); // Close so AuthNotifier can open it freshly
+           
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Restored successfully! Please login.')));
+             context.go('/unlock');
+           }
+        }
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Restore failed: $e'), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<String?> _promptPassword(BuildContext context, String title) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'Password'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('OK')),
+        ],
       ),
     );
   }

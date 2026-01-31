@@ -3,7 +3,12 @@ import '../../domain/entities/vault_item.dart';
 import '../../domain/repositories/password_repository.dart';
 import '../../core/services/vault_service_locator.dart';
 
+import '../state/auth_state.dart';
+
 final vaultListProvider = StateNotifierProvider<VaultListNotifier, List<VaultItem>>((ref) {
+  // Watch auth state so we rebuild (and reload items) when user logs in/out.
+  ref.watch(authProvider);
+  
   final repository = ref.watch(passwordRepositoryProvider);
   return VaultListNotifier(repository);
 });
@@ -16,10 +21,16 @@ class VaultListNotifier extends StateNotifier<List<VaultItem>> {
   }
 
   Future<void> _loadItems() async {
-    final items = await _repository.getAllItems();
-    // Sort by updated descending
-    items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    state = items;
+    try {
+      final items = await _repository.getAllItems();
+      // Sort by updated descending
+      items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      state = items;
+    } catch (e) {
+      // If repository fails (e.g. vault locked during logout), we set empty state
+      // to avoid 'Vault not opened yet' crashes.
+      state = [];
+    }
   }
 
   Future<void> add(VaultItem item) async {

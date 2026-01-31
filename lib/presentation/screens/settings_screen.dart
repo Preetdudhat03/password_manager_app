@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../state/auth_state.dart';
 import '../../core/services/secure_storage_service.dart';
 import '../../core/services/biometric_service.dart';
 import '../../core/services/backup_service.dart';
@@ -270,11 +272,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           const Divider(),
+
+          // Account Section
+          const Padding(
+             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+             child: Text('Account', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () async {
+              // Navigate to Setup screen FIRST, before auth state changes.
+              // This prevents the AppRouter from forcing a redirect to /unlock
+              if (mounted) context.go('/setup');
+
+              try {
+                await ref.read(authProvider.notifier).logout();
+                // Invalidate repo provider to prevent stale box issues
+                ref.invalidate(passwordRepositoryProvider); 
+              } catch (e) {
+                debugPrint('Logout error: $e');
+              }
+            },
+          ),
+          
+          const Divider(),
           
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'SecureVault v1.0.0\nOffline. Secure. Open.',
+              'SecureVault v1.0.0\nOffline. Secure. Open.\n\nDeveloped by preet dudhat',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),

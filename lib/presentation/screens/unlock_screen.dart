@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/providers.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/services/secure_storage_service.dart';
+import '../../core/services/biometric_service.dart';
+import '../../core/services/vault_service_locator.dart';
+import '../../domain/entities/vault_item.dart';
+import '../../domain/repositories/password_repository.dart';
+import '../state/auth_state.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
   const UnlockScreen({super.key});
@@ -11,203 +17,159 @@ class UnlockScreen extends ConsumerStatefulWidget {
 }
 
 class _UnlockScreenState extends ConsumerState<UnlockScreen> {
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _isCreatingNew = false;
-  bool _isLoading = true;
+  final TextEditingController _passwordController = TextEditingController();
+  final BiometricService _biometricService = BiometricService();
+  final SecureStorageService _storageService = SecureStorageService();
+  bool _isLoading = false;
   String? _error;
-  
-  // Biometrics
-  bool _canCheckBiometrics = false;
-  bool _useBiometrics = false; // For setup checkbox
 
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    // Don't auto-prompt/show errors on load, just check silent availability
+    _checkAutoBiometric();
   }
 
-  Future<void> _checkOnboardingStatus() async {
-    final secureStorage = ref.read(secureStorageServiceProvider);
-    final biometricService = ref.read(biometricServiceProvider);
+  Future<void> _checkAutoBiometric() async {
+    final canBio = await _biometricService.isBiometricAvailable;
+    if (!canBio) return;
     
-    final hasKey = await secureStorage.hasMasterKey();
-    final canCheck = await biometricService.isBiometricAvailable();
-    
-    // Check if biometrics was previously enabled
-    final biometricsEnabledStr = await secureStorage.read(key: 'biometrics_enabled');
-    final biometricsEnabled = biometricsEnabledStr == 'true';
-
-    if (mounted) {
-      setState(() {
-        _isCreatingNew = !hasKey;
-        _canCheckBiometrics = canCheck;
-        _isLoading = false;
-        // If not creating new, we might auto-trigger biometric if enabled
-        if (!hasKey) {
-             _useBiometrics = canCheck; // Default to true if available during setup
-        }
-      });
-      
-      if (hasKey && biometricsEnabled && canCheck) {
-        // Optional: Auto-trigger biometric prompt
-        // _handleBiometricUnlock(); 
-      }
+    final storedKey = await _storageService.getBiometricKey();
+    if (storedKey != null) {
+      _tryBiometric(); // Only try if we KNOW we have a key
     }
   }
 
-  Future<void> _handleUnlock() async {
-    setState(() => _error = null);
-    final password = _passwordController.text;
-    
-    if (password.isEmpty) {
-      setState(() => _error = 'Password cannot be empty');
+  Future<void> _tryBiometric() async {
+    // Check if biometric is available and enabled
+    final canBio = await _biometricService.isBiometricAvailable;
+    if (!canBio) {
+      if (mounted) setState(() => _error = "Biometrics not supported/available");
       return;
     }
 
-    final secureStorage = ref.read(secureStorageServiceProvider);
-    final encryptionService = ref.read(encryptionServiceProvider);
+    // Check if we have a stored biometric key
+    final storedKey = await _storageService.getBiometricKey();
+    if (storedKey == null) {
+      if (mounted && _error != null) return; // Silent if error already shown or auto-run
+      // Only show this message if the function was triggered by a user action (e.g. button press).
+      // We can check if _isLoading is false (usually) or pass a flag.
+      // But for simplicity, we'll just check if the widget is fully rendered/interactive.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Unlock with password first to enable biometrics.")),
+        );
+      }
+      return;
+    }
 
+    // Prompt user
     try {
-      if (_isCreatingNew) {
-        if (password != _confirmPasswordController.text) {
-          setState(() => _error = 'Passwords do not match');
-          return;
-        }
+      final authenticated = await _biometricService.authenticate();
+      if (authenticated) {
+        setState(() => _isLoading = true);
+        await ref.read(authProvider.notifier).login(storedKey);
         
-        // Create new master key
-        final passwordHash = encryptionService.hashPassword(password);
-        final masterKey = encryptionService.generateRandomKey();
+        // Memory Hygiene: Clear controllers if any
+        _passwordController.clear();
         
-        // Save Everything
-        await secureStorage.write(key: 'master_password_hash', value: passwordHash);
-        await secureStorage.write(key: 'master_key', value: masterKey.base64);
-        
-        // Save Biometric Preference
-        if (_canCheckBiometrics) {
-           await secureStorage.write(key: 'biometrics_enabled', value: _useBiometrics.toString());
-        }
-        
-        ref.read(masterKeyProvider.notifier).state = masterKey.base64;
-
-        if (mounted) {
-          context.go('/home');
-        }
+        if (mounted) context.go('/home');
       } else {
-        // Verify password
-        final storedHash = await secureStorage.read(key: 'master_password_hash');
-        final inputHash = encryptionService.hashPassword(password);
-        
-        if (storedHash == inputHash) {
-          final masterKey = await secureStorage.read(key: 'master_key');
-          ref.read(masterKeyProvider.notifier).state = masterKey;
-          
-          context.go('/home');
-        } else {
-          setState(() => _error = 'Incorrect password');
-        }
+        setState(() => _error = "Biometric authentication failed");
       }
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = "Biometric error: $e");
     }
   }
-  
-  Future<void> _handleBiometricUnlock() async {
-    final biometricService = ref.read(biometricServiceProvider);
-    final secureStorage = ref.read(secureStorageServiceProvider);
-    
-    final authenticated = await biometricService.authenticate();
-    if (authenticated) {
-      try {
-        final masterKey = await secureStorage.read(key: 'master_key');
-        if (masterKey != null) {
-           ref.read(masterKeyProvider.notifier).state = masterKey;
-           if (mounted) context.go('/home');
-        } else {
-           setState(() => _error = 'Master Key not found. Please reset app.');
+
+  Future<void> _unlock() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final password = _passwordController.text;
+
+    try {
+      final hiveKey = await _storageService.verifyMasterPassword(password);
+      
+      if (mounted) {
+        // Initialize Hive Box with this key via AuthNotifier
+        await ref.read(authProvider.notifier).login(hiveKey);
+        
+        // Memory Hygiene
+        _passwordController.clear();
+        
+        // Auto-enable biometrics if available and not set
+        final canBio = await _biometricService.isBiometricAvailable;
+        if (canBio) {
+          await _storageService.enableBiometricUnlock(hiveKey);
         }
-      } catch (e) {
-         setState(() => _error = 'Error retrieving key: $e');
+
+        context.go('/home');
       }
-    } else {
-      // Failed authentication (canceled or error)
-      // Usually UI feedback handles itself, but we can set error
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          // Clean up the exception message for UI
+          String msg = e.toString();
+          if (msg.startsWith("Exception: ")) {
+            msg = msg.substring(11);
+          }
+          _error = msg;
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(
-                  Icons.lock_outline,
-                  size: 64,
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  _isCreatingNew ? 'Create Master Password' : 'Welcome Back',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Master Password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.key),
-                    errorText: _error,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(
+                    Icons.lock_open_rounded,
+                    size: 64,
+                    color: Color(0xFFD0BCFF),
                   ),
-                ),
-                if (_isCreatingNew) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Unlock Vault',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 32),
                   TextField(
-                    controller: _confirmPasswordController,
+                    controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.check_circle_outline),
+                    decoration: InputDecoration(
+                      labelText: 'Master Password',
+                      prefixIcon: const Icon(Icons.key),
+                      errorText: _error,
                     ),
                   ),
-                  if (_canCheckBiometrics) ...[
-                     const SizedBox(height: 16),
-                     SwitchListTile(
-                       title: const Text('Enable Biometric Unlock'),
-                       value: _useBiometrics,
-                       onChanged: (val) => setState(() => _useBiometrics = val),
-                     ),
-                  ]
-                ],
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _handleUnlock,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(_isCreatingNew ? 'Create & Unlock' : 'Unlock'),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _unlock,
+                    child: _isLoading 
+                        ? const CircularProgressIndicator()
+                        : const Text('Unlock'),
                   ),
-                ),
-                if (!_isCreatingNew && _canCheckBiometrics) ...[
                   const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: _handleBiometricUnlock,
-                    icon: const Icon(Icons.fingerprint),
-                    label: const Text('Use Biometrics'),
-                  ),
+                  TextButton(onPressed: _tryBiometric, child: const Text('Use Biometrics')),
                 ],
-              ],
+              ),
             ),
           ),
         ),

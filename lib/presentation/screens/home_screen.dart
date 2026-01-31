@@ -1,110 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/providers.dart';
+import '../state/vault_state.dart';
+import '../../domain/entities/vault_item.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final passwordsAsync = ref.watch(filteredPasswordsProvider);
-    final isSearchVisible = ref.watch(isSearchVisibleProvider);
+    final vaultItems = ref.watch(vaultListProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: isSearchVisible
-            ? TextField(
-                autofocus: true,
-                style: const TextStyle(color: Colors.white), // Assuming dark app bar or handling contrast
-                decoration: const InputDecoration(
-                  hintText: 'Search...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.white70),
-                ),
-                onChanged: (value) {
-                  ref.read(searchQueryProvider.notifier).state = value;
-                },
-              )
-            : const Text('Passwords'),
+        title: const Text('My Vault'),
         actions: [
           IconButton(
-            icon: Icon(isSearchVisible ? Icons.close : Icons.search),
-            onPressed: () {
-              ref.read(isSearchVisibleProvider.notifier).state = !isSearchVisible;
-              if (isSearchVisible) {
-                // Determine if we should clear query on close
-                ref.read(searchQueryProvider.notifier).state = '';
-              }
-            },
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.push('/settings'),
           ),
-          if (!isSearchVisible)
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => context.push('/settings'),
-            ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await context.push('/add-password');
-          ref.invalidate(passwordsProvider);
-        },
-        child: const Icon(Icons.add),
-      ),
-      body: passwordsAsync.when(
-        data: (passwords) {
-          if (passwords.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.lock_open, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No passwords yet',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: passwords.length,
-            itemBuilder: (context, index) {
-              final entry = passwords[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    child: Text(
-                      entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: vaultItems.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.security, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Your vault is empty',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.grey,
+                              ),
+                        ),
+                      ],
                     ),
                   ),
-                  title: Text(entry.title),
-                  subtitle: Text(entry.username),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.copy),
-                    onPressed: () {
-                      // TODO: Copy password to clipboard (requires decryption)
-                    },
-                  ),
-                  onTap: () {
-                    // TODO: Navigate to details
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: vaultItems.length,
+                  itemBuilder: (context, index) {
+                    final item = vaultItems[index];
+                    return _VaultItemCard(item: item);
                   },
                 ),
-              );
-            },
-          );
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/add_password'),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _VaultItemCard extends StatelessWidget {
+  final VaultItem item;
+
+  const _VaultItemCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          child: Text(
+            item.title.isNotEmpty ? item.title[0].toUpperCase() : '?',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        title: Text(item.title),
+        subtitle: Text(item.username),
+        onTap: () {
+          context.push('/edit_password', extra: item);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }

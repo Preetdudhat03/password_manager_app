@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-import 'core/router/app_router.dart';
+import 'core/services/secure_storage_service.dart';
 import 'core/theme/app_theme.dart';
-import 'data/models/password_model.dart';
-import 'presentation/providers/providers.dart';
+import 'core/router/app_router.dart';
+
+import 'presentation/state/theme_provider.dart';
+
+import 'presentation/state/auth_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Hive
+  // Init Hive
   await Hive.initFlutter();
-  Hive.registerAdapter(PasswordModelAdapter());
   
-  // Open the main box
-  await Hive.openBox<PasswordModel>('passwords');
+  // Init Secure Storage helpers (adapters)
+  await SecureStorageService().initHelpers();
 
-  runApp(
-    const ProviderScope(
-      child: PasswordManagerApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: PasswordManagerApp()));
 }
 
 class PasswordManagerApp extends ConsumerStatefulWidget {
@@ -32,6 +29,7 @@ class PasswordManagerApp extends ConsumerStatefulWidget {
 }
 
 class _PasswordManagerAppState extends ConsumerState<PasswordManagerApp> with WidgetsBindingObserver {
+
   @override
   void initState() {
     super.initState();
@@ -46,32 +44,29 @@ class _PasswordManagerAppState extends ConsumerState<PasswordManagerApp> with Wi
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      // App went to background
-      // Ideally we should set a timer or just lock immediately.
-      // For high security, lock immediately.
-      // We clear the master key provider. This forces a re-login (biometric or password).
-      // However, we must ensure we are not already on the UnlockScreen or Splash.
-      // But clearing the key is safer.
-      if (ref.read(masterKeyProvider) != null) {
-         ref.read(masterKeyProvider.notifier).state = null;
-         appRouter.go('/unlock'); 
-      }
+    // 1️⃣ Memory Hygiene & Auto-Lock
+    // When app goes to background (paused) or is inactive (multitasking view),
+    // we lock the vault immediately to prevent data exposure.
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      // Check if logged in first to avoid redundant calls? 
+      // Logout is idempotent usually, but let's be safe.
+      // We use 'read' because we are inside a callback, strictly speaking simple 'read' is fine here.
+      ref.read(authProvider.notifier).logout();
     }
-    // On resume, if key is null, we should be on UnlockScreen.
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeModeProvider);
+    final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return MaterialApp.router(
-      title: 'SecurePass',
+      title: 'SecureVault',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      routerConfig: appRouter,
+      routerConfig: router,
     );
   }
 }

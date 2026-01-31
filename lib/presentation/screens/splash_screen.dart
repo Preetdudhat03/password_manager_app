@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/services/secure_storage_service.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToNext();
+    _checkAuth();
   }
 
-  Future<void> _navigateToNext() async {
-    // Simulate initialization
-    await Future.delayed(const Duration(seconds: 2));
+  Future<void> _checkAuth() async {
+    await Future.delayed(const Duration(seconds: 1)); // Min splash time
+    final storage = SecureStorageService();
+    final hasPassword = await storage.hasMasterPassword();
+
     if (mounted) {
-      // TODO: Check if user is onboarding or needs unlock
-      // For now, go to unlock
-      context.go('/unlock');
+       if (hasPassword) {
+         context.go('/unlock');
+       } else {
+         context.go('/setup');
+       }
     }
   }
 
@@ -32,16 +38,17 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.lock_person,
+            const Icon(
+              Icons.lock_outline,
               size: 80,
-              color: Theme.of(context).colorScheme.primary,
+              color: Color(0xFFD0BCFF),
             ),
             const SizedBox(height: 16),
-            Text(
-              'SecurePass',
+             Text(
+              'SecureVault',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
             ),
           ],

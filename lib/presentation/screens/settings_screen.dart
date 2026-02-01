@@ -316,7 +316,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final passwordController = TextEditingController();
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Backup Vault'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -331,11 +331,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               final password = passwordController.text;
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(dialogContext); // Close dialog
 
               setState(() => _isLoading = true);
               
@@ -345,38 +345,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 final hiveKey = await _storageService.verifyMasterPassword(password);
                 if (hiveKey != null) {
                   // 2. Perform Backup
-                  // We need to instantiate BackupService. 
-                  // It needs Repo and EncryptionService.
-                  // We can get Repo from ref.read(passwordRepositoryProvider) BUT that provider requires globalVaultBox to be open.
-                  // Since we are in Settings, we assume Vault is open (User is logged in).
-                  // But let's be safe.
-                  
                   final repo = ref.read(passwordRepositoryProvider);
-                  // We need a fresh instance of EncryptionService, usually instantiated directly or via provider.
-                  // In this project we instantiate it directly in Service classes often.
-                  final encryptionService = EncryptionServiceImpl(); // We need to import implementation or interface
+                  final encryptionService = EncryptionServiceImpl();
                   
                   final backupService = BackupService(repo, encryptionService);
-                  await backupService.createEncryptedBackup(password);
+                  // This now calls FilePicker FIRST.
+                  // If user cancels, it returns without error.
+                  // How do we detect cancel? We can't easily unless we change return type of createEncryptedBackup to bool.
+                  // But for now, if it returns, we assume success or cancel.
+                  // If we want "Success" message ONLY on success, we should update BackupService return type.
+                  // BUT, createEncryptedBackup writes file. If cancel, it returns early.
+                  // We can assume if no error thrown, it's possibly success.
+                  // Wait, "Backup ready to share" is wrong if they cancelled.
                   
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Backup ready to share'), backgroundColor: Colors.green),
+                  // NOTE: I didn't change return type of createEncryptedBackup. 
+                  // It returns Future<void>. 
+                  // If user cancels, it just returns. 
+                  // So we might show "Success" even if cancelled?
+                  // I should probably fix BackupService to return bool or similar.
+                  // But to avoid too many edits, let's just rely on "Success" message.
+                  // Actually, showing "Success" when cancelled is bad.
+                  
+                  final success = await backupService.createEncryptedBackup(password);
+                  
+                  if (success) {
+                    rootScaffoldMessengerKey.currentState?.showSnackBar(
+                      const SnackBar(content: Text('BACKUP SAVED SUCCESSFULLY', style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
                     );
                   }
                 } else {
-                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Incorrect Password'), backgroundColor: Colors.red),
+                   rootScaffoldMessengerKey.currentState?.showSnackBar(
+                      const SnackBar(content: Text('INCORRECT PASSWORD'), backgroundColor: Colors.red),
                     );
-                  }
                 }
               } catch (e) {
-                if (mounted) {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Backup failed: $e'), backgroundColor: Colors.red),
-                    );
-                }
+                 rootScaffoldMessengerKey.currentState?.showSnackBar(
+                    SnackBar(content: Text('Backup failed: $e'), backgroundColor: Colors.red),
+                  );
               } finally {
                 if (mounted) setState(() => _isLoading = false);
               }

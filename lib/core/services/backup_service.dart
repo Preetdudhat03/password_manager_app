@@ -15,28 +15,8 @@ class BackupService {
 
   BackupService(this._repository, this._encryptionService);
 
-  Future<void> createEncryptedBackup(String masterPassword) async {
-    // 1. Get All Data
-    final items = await _repository.getAllItems();
-    final jsonList = items.map((e) => _itemToMap(e)).toList();
-    final jsonString = jsonEncode(jsonList);
-
-    // 2. Generate Salt for Backup
-    // We use a fresh salt for the backup file itself
-    final salt = List<int>.generate(16, (i) => DateTime.now().microsecondsSinceEpoch % 255);
-
-    // 3. Derive Key
-    final key = await _encryptionService.deriveKey(masterPassword, salt);
-
-    // 4. Encrypt Data
-    final encryptedBytes = await _encryptionService.encrypt(jsonString, key);
-
-    // 5. Combine Salt + Data
-    // Format version 1: [0x01] [16 bytes salt] [Rest encrypted]
-    // We'll just stick to [16 bytes salt][Encrypted Data] for simplicity
-    final fileBytes = [...salt, ...encryptedBytes];
-
-    // 6. Save Dialog (User Choice)
+  Future<bool> createEncryptedBackup(String masterPassword) async {
+    // 1. Ask User for Location FIRST (Fix UX Delay)
     final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
     final fileName = 'securevault_backup_$timestamp.svb';
 
@@ -46,10 +26,32 @@ class BackupService {
       type: FileType.any,
     );
 
-    if (outputPath != null) {
-      final file = File(outputPath);
-      await file.writeAsBytes(fileBytes);
-    } // else user cancelled
+    if (outputPath == null) return false; // User cancelled
+
+    // 2. Get All Data
+    final items = await _repository.getAllItems();
+    final jsonList = items.map((e) => _itemToMap(e)).toList();
+    final jsonString = jsonEncode(jsonList);
+
+    // 3. Generate Salt for Backup
+    // We use a fresh salt for the backup file itself
+    final salt = Uint8List.fromList(List<int>.generate(16, (i) => DateTime.now().microsecondsSinceEpoch % 255));
+
+    // 4. Derive Key
+    final key = await _encryptionService.deriveKey(masterPassword, salt);
+
+    // 5. Encrypt Data
+    final encryptedBytes = await _encryptionService.encrypt(jsonString, key);
+
+    // 6. Combine Salt + Data
+    // Format version 1: [0x01] [16 bytes salt] [Rest encrypted]
+    // We'll just stick to [16 bytes salt][Encrypted Data] for simplicity
+    final fileBytes = Uint8List.fromList([...salt, ...encryptedBytes]);
+
+    // 7. Write to File
+    final file = File(outputPath);
+    await file.writeAsBytes(fileBytes);
+    return true;
   }
 
   Map<String, dynamic> _itemToMap(VaultItem item) {

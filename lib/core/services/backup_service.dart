@@ -17,42 +17,35 @@ class BackupService {
   BackupService(this._repository, this._encryptionService);
 
   Future<bool> createEncryptedBackup(String masterPassword) async {
-    // 1. Ask User for Location FIRST (Fix UX Delay)
-    final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    final fileName = 'securevault_backup_$timestamp.svb';
-
-    final String? outputPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Backup File',
-      fileName: fileName,
-      type: FileType.any,
-    );
-
-    if (outputPath == null) return false; // User cancelled
+    // 1. Generate Salt for Backup (Moved back to top)
+    final salt = Uint8List.fromList(List<int>.generate(16, (i) => DateTime.now().microsecondsSinceEpoch % 255));
 
     // 2. Get All Data
     final items = await _repository.getAllItems();
     final jsonList = items.map((e) => _itemToMap(e)).toList();
     final jsonString = jsonEncode(jsonList);
 
-    // 3. Generate Salt for Backup
-    // We use a fresh salt for the backup file itself
-    final salt = Uint8List.fromList(List<int>.generate(16, (i) => DateTime.now().microsecondsSinceEpoch % 255));
-
-    // 4. Derive Key
+    // 3. Derive Key
     final key = await _encryptionService.deriveKey(masterPassword, salt);
 
-    // 5. Encrypt Data
+    // 4. Encrypt Data
     final encryptedBytes = await _encryptionService.encrypt(jsonString, key);
 
-    // 6. Combine Salt + Data
-    // Format version 1: [0x01] [16 bytes salt] [Rest encrypted]
-    // We'll just stick to [16 bytes salt][Encrypted Data] for simplicity
+    // 5. Combine Salt + Data
     final fileBytes = Uint8List.fromList([...salt, ...encryptedBytes]);
 
-    // 7. Write to File
-    final file = File(outputPath);
-    await file.writeAsBytes(fileBytes);
-    return true;
+    // 6. Save File using Plugin (Pass bytes for Android/iOS support)
+    final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+    final fileName = 'securevault_backup_$timestamp.svb';
+
+    final String? result = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save Backup File',
+      fileName: fileName,
+      type: FileType.any,
+      bytes: fileBytes, // Pass bytes directly
+    );
+
+    return result != null;
   }
 
   Map<String, dynamic> _itemToMap(VaultItem item) {

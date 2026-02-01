@@ -1,0 +1,125 @@
+SecureVault — A Simple Explanation
+How This Password Manager Protects Your Data
+
+================================================================================
+1️⃣ What Is SecureVault?
+================================================================================
+
+## The Problem
+We all have too many accounts. Email, bank, social media, shopping... remembering a unique password for each one is impossible. So, many of us re-use the same password everywhere. This is dangerous—if hackers steal that one password, they can access everything you own.
+
+## The Solution
+SecureVault is a digital safe on your phone. It remembers all your complex passwords for you. You only need to remember ONE strong "Master Password" to unlock the safe.
+
+## Why "Offline"?
+Most password apps store your data on their company servers (the "Cloud"). This is convenient, but it means you are trusting that company to keep your secrets safe. SecureVault is different. It works entirely offline. Your passwords never leave your phone. It's like writing them in a physical notebook that only you can read, except much safer.
+
+================================================================================
+2️⃣ What Makes SecureVault Different?
+================================================================================
+
+*   **No Account Required**: You don't sign up with an email. You don't create an online profile.
+*   **No Cloud Storage**: We don't have a server. We don't have a copy of your passwords. We don't even know who you are.
+*   **No Tracking**: There are no ads, no trackers, and no analytics watching what you do.
+*   **Complete Privacy**: Because the data stays on your phone, no one—not even the developer—can ever see your passwords.
+
+================================================================================
+3️⃣ How Your Passwords Are Protected
+================================================================================
+
+Imagine a physical safe made of indestructible steel.
+
+*   When you add a password to SecureVault, the app puts it inside this safe and locks the door.
+*   The "Lock" is a mathematical formula that scrambles your data into gibberish.
+*   The "Key" is your Master Password.
+
+Without the Key, the safe simply cannot be opened. Even if a supercomputer tried to guess the combination for a million years, it wouldn't succeed. This isn't just a marketing promise; it's based on the same standard security technology used by banks and governments worldwide.
+
+================================================================================
+4️⃣ What Is the Master Password?
+================================================================================
+
+The Master Password is the single most important thing in SecureVault.
+
+*   **It Unlocks Everything**: It is the only way to open your vault.
+*   **We Do Not Know It**: The app does not send your Master Password to us. It does not save it anywhere permanent.
+*   **If You Forget It, It Is Gone**: Because we don't know your password, we cannot reset it for you. There is no "Forgot Password" button that sends you an email. If you forget this password, your data is locked forever.
+
+This sounds scary, but it is necessary for true security. If *we* could reset your password, then a hacker could trick us into resetting it for them. By removing that option, we remove that risk.
+
+================================================================================
+5️⃣ What Happens If Someone Steals Your Phone?
+================================================================================
+
+If a thief steals your phone, your passwords are still safe.
+
+1.  **They Need Your Master Password**: Even if they can unlock your phone screen, they cannot open SecureVault without your specific Master Password.
+2.  **Biometrics Aren't Enough**: Even if they somehow trick the fingerprint scanner, the app requires the Master Password periodically and for sensitive actions (like exporting data).
+3.  **The Data is Gibberish**: If they try to hack into the phone's storage files directly, all they will see is scrambled, nonsensical code. Without your password, that code cannot be turned back into readable text.
+
+================================================================================
+6️⃣ What Happens If You Lose Your Phone?
+================================================================================
+
+This is the most critical part to understand.
+
+Because SecureVault does not sync to the cloud, **if you lose your phone, you lose your passwords... unless you have a Backup.**
+
+Think of it like losing a physical wallet. If you drop it in the ocean, the cash inside is gone. SecureVault is the same. To protect yourself, you must use the "Backup" feature.
+
+================================================================================
+7️⃣ What Is an Encrypted Backup?
+================================================================================
+
+A Backup is a special file you can create inside the app. It makes a copy of all your passwords.
+
+*   **It Is Also Locked**: This backup file is encrypted just like your vault. If you email it to yourself or save it on Google Drive, it is safe. Even if someone hacks your email and finds the file, they cannot open it without your Master Password.
+*   **Your Responsibility**: You should create a backup regularly and save it somewhere SAFE (like a computer, a USB drive, or your personal cloud storage).
+*   **Restoring**: If you get a new phone, you simply install SecureVault, select "Restore from Backup", find that file, and enter your password. All your data will reappear instantly.
+
+================================================================================
+8️⃣ What SecureVault Does NOT Do
+================================================================================
+
+We believe in honesty. Here is what we *don't* do:
+
+*   **No "Magic" Recovery**: We cannot help you get into your vault if you forget the password.
+*   **No Automatic Sync**: We don't automatically put your passwords on all your devices. You handle your data.
+*   **No Selling Data**: We cannot sell your data because we don't have it.
+
+================================================================================
+9️⃣ Who Is This App For?
+================================================================================
+
+SecureVault is for people who want **Control** and **Privacy**.
+
+*   It is for you if you don't trust big tech companies with your most sensitive secrets.
+*   It is for you if you want to know exactly where your data is (in your pocket).
+*   It is for you if you are willing to take responsibility for remembering ONE password and keeping ONE backup file safe.
+
+================================================================================
+🔟 Limitations (Honest Talk)
+================================================================================
+
+We want you to be fully informed.
+
+*   **The "Total Loss" Scenario**: If you (1) Forget your Master Password AND (2) Have no written copy of it... your data is gone. There is no backdoor.
+*   **The "Device Loss" Scenario**: If you (1) Lose your phone AND (2) Never made a backup file... your data is gone.
+
+This is the trade-off for high security. By removing the "easy" ways to get back in, we also remove the "easy" ways for hackers to break in.
+
+================================================================================
+1️⃣1️⃣ Summary
+================================================================================
+
+**SecureVault protects** you from hackers, server breaches, and prying eyes.
+**SecureVault cannot protect** you from forgetting your own Master Password.
+
+**Your Job**:
+1.  Choose a Master Password you will remember.
+2.  Make a Backup file regularly.
+3.  Keep that file safe.
+
+If you do these three things, your digital life is secure.
+
+**Developed by Preet Dudhat**

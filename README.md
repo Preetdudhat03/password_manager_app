@@ -1,71 +1,116 @@
-# SecureVault - Offline Password Manager (Flutter)
+# SecureVault — Offline Password Manager
 
-A personal-first, privacy-first, zero-knowledge password manager build with Flutter.
+SecureVault is an offline-first, local-only password manager built with Flutter. It allows users to securely store credentials on their device without relying on third-party cloud servers. This project was developed as a "Micro Application" to explore advanced mobile security concepts, clean architecture, and zero-knowledge encryption principles.
 
-## 🔐 Security Model & Architecture
+## Motivation
 
-This application is designed with a strictly **Offline-First** and **Zero-Knowledge** philosophy.
+In a digital landscape dominated by cloud-based services, data breaches are increasingly common. While centralized password managers offer convenience, they also present a centralized target for attackers.
 
-### Core Principles
-1.  **Offline by Default:** No internet permission, no cloud sync, no API calls.
-2.  **Zero Knowledge:** The master password is never stored. It is used to derive the encryption key in memory.
-3.  **No Telemetry:** No analytics SDKs, no ad networks.
+SecureVault was built to explore the opposite extreme: **Maximum Sovereignty**. By keeping all data strictly on the user's device and removing the network layer entirely, the attack surface is reduced to the physical possession of the device itself. This project serves as a practical exploration of cryptography, secure mobile storage, and privacy-by-design user experience.
 
-### Data Protection
--   **Encryption:** The Vault is encrypted using **AES-256-GCM**.
--   **Key Derivation:** The encryption key is derived from the Master Password using **Argon2id** (via `cryptography` package).
--   **Storage:** The encrypted vault chunks are stored using **Hive** (encrypted box) or raw file storage with **Flutter Secure Storage** protecting the encryption key (wrapped).
-    -   *Current Implementation uses `flutter_secure_storage` to store the wrapped Key/Salt and `Hive` or Files for the Vault content.*
--   **Biometrics:** Biometric authentication (Fingerprint/Face) is used for convenience but does NOT replace the Master Password for key derivation (unless using hardware-backed keystore wrapping, which is implemented via `flutter_secure_storage`).
+## Key Features
 
-### Android Security Features
--   **FLAG_SECURE:** Screenshots and screen recording are disabled in the app.
--   **Biometric Prompt:** Uses generic Android BiometricPrompt via `local_auth`.
--   **Auto-Lock:** App clears sensitive state on background.
+*   **Offline-First**: No internet permission required. Data never leaves the device.
+*   **Zero-Knowledge Encryption**: The master password is never stored or transmitted.
+*   **Encrypted Local Vault**: All credentials are encrypted using AES-256-GCM.
+*   **Secure Backup**: Users can export their vault to an encrypted file for safekeeping.
+*   **Biometric Unlock**: Supports Fingerprint/FaceID for convenient access.
+*   **Auto-Lock**: Automatically secures the vault when the app is backgrounded.
+*   **No Analytics**: Zero tracking, zero ads, zero data collection.
 
-## 📱 Features
+## Security Model
 
--   **Unlock:** Master Password & Biometric unlock.
--   **Vault:** View, Add, Edit, Delete passwords.
--   **Generator:** Strong password generator (coming soon).
--   **Theme:** Privacy-focused Dark Mode.
+SecureVault operates on a **Zero-Knowledge** architecture. 
 
-## 🛠 Project Structure
+1.  **Client-Side Only**: All encryption and decryption happen locally on the device.
+2.  **Volatile Master Key**: The key used to encrypt your data is derived from your Master Password using **Argon2id**. This key exists in RAM only while the app is open. It is never written to disk.
+3.  **No Backdoor**: Because the developer (me) does not run a server, I cannot reset your password, view your data, or help you recover access if you lose your credentials.
+4.  **User Responsibility**: You are the sole custodian of your keys and your data.
 
-The project follows Clean Architecture:
--   `lib/core`: Core logic, security, encryption, theme.
--   `lib/data`: Data layer, repositories, models, datasources.
--   `lib/domain`: Domain layer, entities, usecases.
--   `lib/presentation`: UI layer, screens, widgets, riverpod providers.
+## Backup & Recovery Philosophy
 
-## 🚀 How to Run
+Because there is no cloud synchronization, losing your phone would normally mean losing your data. To mitigate this without compromising security, SecureVault implements a **Manual Encrypted Backup** system.
+
+*   You can export your vault to a `.svb` (SecureVault Backup) file.
+*   This file is encrypted with AES-256.
+*   It is safe to store this file on Google Drive, email it to yourself, or keep it on a USB drive.
+*   To restore, you simply load the file and enter the Master Password used to create it.
+
+**Warning**: If you lose your phone AND you have not created a backup file, your data is effectively gone forever. This is a deliberate security trade-off.
+
+## Tech Stack
+
+| Component | Technology |
+| :--- | :--- |
+| **Framework** | Flutter (Dart) |
+| **State Management** | Riverpod |
+| **Local Database** | Hive (AES-256 Encrypted Box) |
+| **Cryptography** | AES-GCM, Argon2id (via `cryptography` package) |
+| **Secure Storage** | Android Keystore / iOS Keychain (via `flutter_secure_storage`) |
+| **Navigation** | GoRouter |
+| **Architecture** | Clean Architecture (Domain/Data/Presentation) |
+
+## Project Structure
+
+The codebase follows strict separation of concerns:
+
+```
+lib/
+ ├── core/              # Shared utilities (Crypto, Router, Theme)
+ ├── data/              # Repositories & Data Sources (Hive, SecureStorage)
+ ├── domain/            # Business Logic (Entities & Repo Interfaces)
+ └── presentation/      # UI Layer (Screens, Widgets, Notifiers)
+     ├── screens/
+     ├── state/
+     └── widgets/
+```
+
+## Getting Started
 
 ### Prerequisites
--   Flutter SDK (Stable)
--   Android SDK & Emulator/Device
--   Java 17 (Required for Gradle)
+*   Flutter SDK (3.x or higher)
+*   Android Studio / VS Code
+*   An Android device or emulator
 
-### Steps
-1.  **Clone & Install Dependencies:**
+### Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/Start-Up-Republic-Ind/SecureVault.git
+    cd password_manager
+    ```
+
+2.  **Install dependencies**:
     ```bash
     flutter pub get
     ```
 
-2.  **Run on Android:**
-    Connect a device or start an emulator.
+3.  **Run the app**:
+    Connect your Android device (ensure USB Debugging is ON).
     ```bash
     flutter run
     ```
 
-3.  **Build APK:**
-    ```bash
-    flutter build apk --release
-    ```
+## Limitations & Disclaimer
 
-## ⚠️ Important Notes
+*   **Micro Project**: This app is built for educational and portfolio purposes. It has not undergone a third-party security audit.
+*   **No Cross-Device Sync**: The app is designed for a single device. Syncing between a phone and laptop is currently not supported (except via manual backup/restore).
+*   **Use at Your Own Risk**: While standard industry algorithms are used, the author accepts no liability for data loss.
 
--   **Do not lose your Master Password.** There is no recovery mechanism.
--   **Backup:** (Feature In Progress) Export encrypted vault manually.
+## Future Improvements
 
----
-*Built with Flutter & Riverpod. Secure by Design.*
+*   **Steganography Support**: Hiding backup files inside images.
+*   **Hardware Token Support**: Unlocking via YubiKey (NFC).
+*   **Desktop Support**: Windows/Linux/MacOS versions.
+*   **Multi-Vault**: Separation of Work and Personal vaults.
+
+## License
+
+This project is open-source and available under the **MIT License**.
+
+## Author
+
+**Preet Dudhat**  
+[GitHub Profile](https://github.com/Start-Up-Republic-Ind)
+
+_Feedback, issues, and pull requests are welcome. This project is a continuous learning exercise in secure mobile development._

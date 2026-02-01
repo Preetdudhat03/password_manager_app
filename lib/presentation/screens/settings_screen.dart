@@ -166,8 +166,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Password changed successfully'),
+                        content: Text('MASTER PASSWORD CHANGED SUCCESSFULLY', style: TextStyle(fontWeight: FontWeight.bold)),
                         backgroundColor: Colors.green,
+                        duration: Duration(seconds: 3),
                       ),
                     );
                   }

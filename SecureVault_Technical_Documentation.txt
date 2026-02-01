@@ -1,0 +1,242 @@
+SecureVault — Offline Password Manager
+Complete Architecture, Security & Workflow Documentation
+
+================================================================================
+1️⃣ PROJECT OVERVIEW
+================================================================================
+
+## What is SecureVault?
+SecureVault is a high-security, local-only password manager built with Flutter. It allows users to store sensitive credentials (usernames, passwords, notes) in an encrypted vault on their own device, without relying on any third-party cloud servers.
+
+## Why was it built?
+In an era of frequent data breaches and server compromises, the "Cloud-First" model of password management presents a significant attack surface. If a central provider is hacked, millions of vaults are exposed. SecureVault was built to invert this model: by keeping data strictly offline and encrypted on the user's device, the attack surface is reduced to the physical device itself.
+
+## Problem Solved
+Most users reuse passwords because they cannot remember unique complex ones. Existing offline solutions are often cumbersome or lack modern UX. SecureVault bridges the gap by offering military-grade security with a modern, "Micro-App" user experience that focuses on speed and simplicity.
+
+## Why Offline-First?
+Offline-first guarantees "Zero-Knowledge" by design. Data never leaves the device network interface. There is no API to intercept, no database to leak, and no server administrator who can access user keys.
+
+================================================================================
+2️⃣ DESIGN PHILOSOPHY
+================================================================================
+
+## Zero-Knowledge Principle
+The core philosophy is that the application "knows nothing". The Master Password is never stored in plaintext anywhere. It is only held in volatile RAM during the active session. If the user forgets their Master Password, the data remains mathematically inaccessible forever.
+
+## No-Server Architecture
+There is no backend. The "Server" is the file system of the device. This creates a distributed security model where every user is an island. Attacking SecureVault requires attacking specific individual devices, which is resource-intensive compared to mass cloud harvesting.
+
+## "No Recovery" Policy
+We explicitly rejected "Password Recovery" via email/SMS. Implementing recovery implies a backdoor or a stored key that can be unlocked by a third party. We accept the trade-off that a user losing their Master Password loses their data, in exchange for the guarantee that NO ONE else can access it.
+
+================================================================================
+3️⃣ THREAT MODEL
+================================================================================
+
+## In-Scope Threats (Defended Against)
+1.  **Device Theft/Loss**: If the phone is stolen, the data is encrypted at rest using AES-256. Without the Master Password (which is not stored), the data is effectively random noise.
+2.  **Snapshot/Screen Recording malware**: The app utilizes `FLAG_SECURE` to prevent the OS and other apps from capturing screenshots or viewing the app in the "Recent Apps" switcher.
+3.  **Shoulder Surfing**: Passwords are masked by default.
+4.  **Database Extraction**: If an attacker copies the Hive database file, it is encrypted with a key they do not possess.
+
+## Out-of-Scope Threats (Accepted Risks)
+1.  **Deep System Compromise (Root/Jailbreak)**: If an attacker has root access and can read active RAM or hook into the application process in real-time, they can theoretically extract the key when the user types it. No software can fully defend against a compromised OS kernel.
+2.  **Surveillance/Keylogging**: If a physical camera records the user typing their password, prevention is impossible via software.
+
+================================================================================
+4️⃣ ENCRYPTION & CRYPTOGRAPHY
+================================================================================
+
+## Core Algorithm: AES-256-GCM
+We use **AES (Advanced Encryption Standard)** in **GCM (Galois/Counter Mode)** with 256-bit keys.
+
+*   **Why GCM?** GCM is an **AEAD (Authenticated Encryption with Associated Data)** mode. It provides both confidentiality (encryption) and integrity (authentication). Unlike CBC mode, which requires a separate HMAC to prevent padding oracle attacks and malleability, GCM handles integrity natively.
+*   **Why Rejection of Others?**
+    *   *AES-CBC*: Vulnerable to padding oracle attacks if implemented incorrectly; requires separate MAC.
+    *   *ChaCha20*: Excellent, but AES has hardware acceleration on most modern mobile chips (ARMv8).
+
+## Key Derivation: Argon2id
+We do not use the Master Password directly as an encryption key. We derive a 32-byte Cryptographic Key using **Argon2id**.
+
+*   **Configuration**:
+    *   Iterations: 2 (optimized for mobile latency vs security balance)
+    *   Memory: 64 MB (Hardens against ASIC/FPGA/GPU attacks)
+    *   Parallelism: 1
+*   **Why Argon2id?** It is the winner of the Password Hashing Competition. It is memory-hard, making it resistant to massive GPU cracking farms that trivialized older algorithms like PBKDF2 or SHA-256.
+*   **Salt**: Every derivation uses a unique 16-byte random salt to prevent Rainbow Table attacks.
+
+## Integrity Protection
+Because we use AES-GCM, every encrypted payload includes an "Authentication Tag" (MAC). When decrypting, if a single bit of the ciphertext has been altered (e.g., bit-flipping attack), the decryption fails instantly. This guarantees data integrity.
+
+## Key Handling
+1.  **Master Password**: Never stored. Input -> Argon2 -> Key.
+2.  **Storage Key**: To allow fast verify without full decryption, we use a "Verifier" string.
+3.  **Encrypted SharedPreferences (Android)**: We wrap the Hive Database Key with the Master Key and store pieces in Android's hardware-backed Keystore system where available.
+
+================================================================================
+5️⃣ AUTHENTICATION FLOW
+================================================================================
+
+## 1. Setup / First Launch
+*   User enters a Master Password.
+*   App generates a random Salt.
+*   App runs Argon2id(Password, Salt) -> Master Key.
+*   App generates a random 256-bit Hive Key.
+*   App encrypts the Hive Key *using* the Master Key.
+*   App stores [Salt, EncryptedVerifier, EncryptedHiveKey] in Secure Storage.
+
+## 2. Login
+*   User inputs Master Password.
+*   App retrieves Salt from storage.
+*   App runs Argon2id(Input, Salt) -> Derived Key.
+*   App attempts to decrypt the "EncryptedVerifier" string.
+*   **If Success**: The password is correct. Proceed to decrypt the Hive Key -> Open Vault.
+*   **If Fail**: Authenticated Encryption failure (Tag mismatch). Wrong password.
+
+## 3. Biometric Unlock
+*   **Convenience ONLY**: Biometrics allow bypassing the typing of the Master Password.
+*   **Implementation**: When enabled, the raw Hive Key is stored in a separate Secure Storage slot protected by the Android Biometric prompt.
+*   Using biometrics retrieves this key directly to open the box.
+
+## 4. Auto-Lock
+*   The app listens to App Lifecycle State (`paused` / backgorunded).
+*   On pause, the encryption memory is cleared, and the Hive box is closed.
+*   Router redirects to Unlock Screen immediately.
+
+================================================================================
+6️⃣ VAULT DATA MODEL
+================================================================================
+
+The `VaultItem` entity represents a stored credential.
+
+*   `id` (UUID): Unique identifier.
+*   `title`: Encrypted.
+*   `username`: Encrypted.
+*   `password`: Encrypted.
+*   `notes`: Encrypted.
+*   `createdAt` / `updatedAt`: Metadata for sorting.
+
+All fields are serialized to JSON, then the ENTIRE JSON string is encrypted as a single blob. This hides metadata (field lengths) better than field-level encryption. The database (Hive) sees only opaque binary blobs.
+
+================================================================================
+7️⃣ LOCAL STORAGE LAYER
+================================================================================
+
+## Technology: Hive
+We use **Hive** (NoSQL key-value store).
+*   **Why Hive?** Extremely fast, pure Dart, easy to encrypt. Unlike SQL, it handles binary blobs natively and efficiently.
+*   **Encryption at Rest**: Hive supports AES-256 encryption for the box file itself. We supply the Hive cipher with our secure 256-bit key. Everything written to disk (`.hive` file) is encrypted.
+*   If you open the file in a text editor, it is indistinguishable from random data.
+
+================================================================================
+8️⃣ BACKUP & RESTORE SYSTEM
+================================================================================
+
+## Why Local Backup?
+Since there is no cloud, users need a way to migrate data or survive a factory reset. We implemented a manual file export.
+
+## format: .svb (SecureVault Backup)
+The file format is valid JSON data encrypted with AES-256-GCM.
+Structure: `[Salt (16 bytes)] + [Encrypted Payload (N bytes)]`
+
+## Export Workflow
+1.  **Permissions**: We use `FilePicker` (or SAF on Android) to request a write location.
+2.  **Salt**: A *new* random salt is generated for the backup (different from the vault salt).
+3.  **Key**: A backup-specific key is derived from the Master Password + Backup Salt.
+4.  **Encryption**: The entire vault list is JSON-encoded and encrypted.
+5.  **Write**: The salt is prepended to the file so it can be read first during restore.
+
+## Restore Workflow
+1.  **Read**: App reads first 16 bytes (Salt).
+2.  **Key**: User inputs password -> Argon2id(Input, Salt) -> Key.
+3.  **Decrypt**: Payload is decrypted. If password is wrong, GCM tag check fails.
+4.  **Import**: The decrypted JSON is parsed and re-saved into the local Hive vault (encrypted with the *current* device Master Key).
+
+**Security Guarantee**: The backup file is safe to store in Google Drive or email because it uses the same encryption strength as the vault itself.
+
+================================================================================
+9️⃣ APP ARCHITECTURE
+================================================================================
+
+The app follows **Clean Architecture** principles to ensure maintainability and testability.
+
+*   `domain/`: The core business rules. Contains `Entities` (VaultItem) and `Repository Interfaces`. No Flutter code, pure Dart.
+*   `data/`: Implementation of the domain. Contains `Repository Impl`, `Data Sources` (Hive, SecureStorage), and `Models` (JSON serialization).
+*   `presentation/`: The UI. Screens, Widgets, and Riverpod StateNotifiers.
+*   `core/`: Shared utilities (EncryptionService, ServiceLocator, AppRouter).
+
+**Data Flow**: UI -> Controller(Notifier) -> Repository -> Service(Hive/Crypto)
+
+================================================================================
+🔟 STATE MANAGEMENT
+================================================================================
+
+## Technology: Flutter Riverpod
+*   **Why Riverpod?** It offers compile-time safety and better state isolation than Provider. It allows us to access repositories and services via dependency injection easily.
+*   **Reactive UI**: The `vaultListProvider` listens to changes. If a sync or add operation occurs, the UI updates automatically.
+*   **Auth State**: `authProvider` is a global boolean stream. The AppRouter listens to this stream (`refreshListenable`) to handle specialized redirection (e.g., auto-logout redirect).
+
+================================================================================
+1️⃣1️⃣ UI & UX DECISIONS
+================================================================================
+
+*   **Dark Mode**: Enabled by default/system. Essential for a utility that might be used at night.
+*   **Minimal Animations**: Security tools should feel rigid and responsive, not "floaty". Animations are kept short to reduce perceived latency.
+*   **Masked Text**: All sensitivity fields obscured by default.
+*   **Feedback**: SnackBars are used rigorously to confirm actions (Copied, Saved, Error).
+
+================================================================================
+1️⃣2️⃣ ANDROID-SPECIFIC SECURITY
+================================================================================
+
+*   **FLAG_SECURE**: implemented in `MainActivity.kt`.
+    *   *Effect*: Prevents the OS from creating a screenshot for the "Overview" (multitasking) screen. If you switch apps, the SecureVault preview is blank/white.
+    *   *Effect*: Prevents screen recording apps or malware from capturing the UI.
+*   **EncryptedSharedPreferences**: Used implicitly via `flutter_secure_storage` options to ensure keys stored in `shared_prefs` xml files are actually wrapping Android Keystore keys.
+
+================================================================================
+1️⃣3️⃣ MEMORY HYGIENE
+================================================================================
+
+*   **Volatile Key**: The Master Key is never written to disk. It exists in memory only.
+*   **Lifecycle Handling**: When the app pauses, we call `logout()`. This explicitly:
+    1.  Closes the Hive box (flushes data).
+    2.  Sets the global box reference to null.
+    3.  Tells the Router to lock the UI.
+    This aims to reduce the time-window where decrypted data resides in RAM.
+
+================================================================================
+1️⃣4️⃣ ERROR HANDLING & FAIL-SAFE
+================================================================================
+
+*   **Catch-All**: Critical flows (Export/Import) are wrapped in try-catch.
+*   **Type Safety**: We use explicit `Uint8List` for all crypto operations to avoid platform-specific FFI crashes (e.g., "bytes are required" errors).
+*   **Fail-Safe**: If the vault file is corrupted, the app detects the failure during `openBox` and prompts the user (or crashes safely rather than showing bad data).
+
+================================================================================
+1️⃣5️⃣ LIMITATIONS & HONEST DISCLOSURE
+================================================================================
+
+*   **No Cloud Recovery**: If you lose your phone AND have no backup file, your data is gone. We cannot help you.
+*   **Device Rooting**: If your device is compromised at the root level, malware could potentially keylog your Master Password. We assume a trusted OS.
+*   **Single User**: Designed for personal use (one vault per device locale).
+
+================================================================================
+1️⃣6️⃣ FUTURE IMPROVEMENTS
+================================================================================
+
+*   **Hardware Token Support**: adding support for YubiKey via NFC for Unlock.
+*   **Steganography**: Hiding the backup container inside an image.
+*   **Password Generator**: Built-in tool to create strong random passwords.
+*   **Multi-Vault**: Separation of "Work" vs "Personal" credentials.
+
+================================================================================
+1️⃣7️⃣ FINAL SUMMARY
+================================================================================
+
+SecureVault is an exercise in **Paranoid Engineering**. Every decision—from choosing AES-GCM to disabling cloud sync—prioritizes one thing: **User Sovereignty**.
+
+The user owns the key. The user owns the data. The code serves only as a secure vault to protect that ownership.
+
+**Developed by Preet Dudhat**

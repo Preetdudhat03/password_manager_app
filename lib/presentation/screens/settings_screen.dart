@@ -7,6 +7,7 @@ import '../../core/services/biometric_service.dart';
 import '../../core/services/backup_service.dart';
 import '../../core/encryption/encryption_service.dart';
 import '../../core/services/vault_service_locator.dart';
+import '../../core/utils/globals.dart';
 import '../state/theme_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -65,7 +66,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final passwordController = TextEditingController();
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Enable Biometrics'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -80,11 +81,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               final password = passwordController.text;
-              Navigator.pop(context); // Close dialog first based on async gap safety
+              Navigator.pop(dialogContext); // Close dialog first based on async gap safety
               
               // Verify
               setState(() => _isLoading = true);
@@ -115,7 +116,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Change Master Password'),
         content: SizedBox(
           width: double.maxFinite,
@@ -150,7 +151,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -158,20 +159,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               if (formKey.currentState!.validate()) {
                 final current = currentController.text;
                 final newPass = newController.text;
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
 
                setState(() => _isLoading = true);
                 try {
                   await _storageService.changeMasterPassword(current, newPass);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('MASTER PASSWORD CHANGED SUCCESSFULLY', style: TextStyle(fontWeight: FontWeight.bold)),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                  }
+                  // Use Global Key to guarantee visibility
+                  rootScaffoldMessengerKey.currentState?.showSnackBar(
+                    const SnackBar(
+                      content: Text('MASTER PASSWORD CHANGED SUCCESSFULLY', style: TextStyle(fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
                 } catch (e) {
                   if (mounted) {
                     // Try to show clean error

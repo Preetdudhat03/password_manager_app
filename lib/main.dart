@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/services/secure_storage_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'core/utils/globals.dart';
 
 import 'presentation/state/theme_provider.dart';
 
@@ -61,6 +62,7 @@ class _PasswordManagerAppState extends ConsumerState<PasswordManagerApp> with Wi
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp.router(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       title: 'SecureVault',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,

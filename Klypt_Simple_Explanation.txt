@@ -1,21 +1,21 @@
-SecureVault — A Simple Explanation
+Klypt — A Simple Explanation
 How This Password Manager Protects Your Data
 
 ================================================================================
-1️⃣ What Is SecureVault?
+1️⃣ What Is Klypt?
 ================================================================================
 
 ## The Problem
 We all have too many accounts. Email, bank, social media, shopping... remembering a unique password for each one is impossible. So, many of us re-use the same password everywhere. This is dangerous—if hackers steal that one password, they can access everything you own.
 
 ## The Solution
-SecureVault is a digital safe on your phone. It remembers all your complex passwords for you. You only need to remember ONE strong "Master Password" to unlock the safe.
+Klypt is a digital safe on your phone. It remembers all your complex passwords for you. You only need to remember ONE strong "Master Password" to unlock the safe.
 
 ## Why "Offline"?
-Most password apps store your data on their company servers (the "Cloud"). This is convenient, but it means you are trusting that company to keep your secrets safe. SecureVault is different. It works entirely offline. Your passwords never leave your phone. It's like writing them in a physical notebook that only you can read, except much safer.
+Most password apps store your data on their company servers (the "Cloud"). This is convenient, but it means you are trusting that company to keep your secrets safe. Klypt is different. It works entirely offline. Your passwords never leave your phone. It's like writing them in a physical notebook that only you can read, except much safer.
 
 ================================================================================
-2️⃣ What Makes SecureVault Different?
+2️⃣ What Makes Klypt Different?
 ================================================================================
 
 *   **No Account Required**: You don't sign up with an email. You don't create an online profile.
@@ -29,7 +29,7 @@ Most password apps store your data on their company servers (the "Cloud"). This 
 
 Imagine a physical safe made of indestructible steel.
 
-*   When you add a password to SecureVault, the app puts it inside this safe and locks the door.
+*   When you add a password to Klypt, the app puts it inside this safe and locks the door.
 *   The "Lock" is a mathematical formula that scrambles your data into gibberish.
 *   The "Key" is your Master Password.
 
@@ -39,7 +39,7 @@ Without the Key, the safe simply cannot be opened. Even if a supercomputer tried
 4️⃣ What Is the Master Password?
 ================================================================================
 
-The Master Password is the single most important thing in SecureVault.
+The Master Password is the single most important thing in Klypt.
 
 *   **It Unlocks Everything**: It is the only way to open your vault.
 *   **We Do Not Know It**: The app does not send your Master Password to us. It does not save it anywhere permanent.
@@ -53,7 +53,7 @@ This sounds scary, but it is necessary for true security. If *we* could reset yo
 
 If a thief steals your phone, your passwords are still safe.
 
-1.  **They Need Your Master Password**: Even if they can unlock your phone screen, they cannot open SecureVault without your specific Master Password.
+1.  **They Need Your Master Password**: Even if they can unlock your phone screen, they cannot open Klypt without your specific Master Password.
 2.  **Biometrics Aren't Enough**: Even if they somehow trick the fingerprint scanner, the app requires the Master Password periodically and for sensitive actions (like exporting data).
 3.  **The Data is Gibberish**: If they try to hack into the phone's storage files directly, all they will see is scrambled, nonsensical code. Without your password, that code cannot be turned back into readable text.
 
@@ -63,9 +63,9 @@ If a thief steals your phone, your passwords are still safe.
 
 This is the most critical part to understand.
 
-Because SecureVault does not sync to the cloud, **if you lose your phone, you lose your passwords... unless you have a Backup.**
+Because Klypt does not sync to the cloud, **if you lose your phone, you lose your passwords... unless you have a Backup.**
 
-Think of it like losing a physical wallet. If you drop it in the ocean, the cash inside is gone. SecureVault is the same. To protect yourself, you must use the "Backup" feature.
+Think of it like losing a physical wallet. If you drop it in the ocean, the cash inside is gone. Klypt is the same. To protect yourself, you must use the "Backup" feature.
 
 ================================================================================
 7️⃣ What Is an Encrypted Backup?
@@ -75,10 +75,10 @@ A Backup is a special file you can create inside the app. It makes a copy of all
 
 *   **It Is Also Locked**: This backup file is encrypted just like your vault. If you email it to yourself or save it on Google Drive, it is safe. Even if someone hacks your email and finds the file, they cannot open it without your Master Password.
 *   **Your Responsibility**: You should create a backup regularly and save it somewhere SAFE (like a computer, a USB drive, or your personal cloud storage).
-*   **Restoring**: If you get a new phone, you simply install SecureVault, select "Restore from Backup", find that file, and enter your password. All your data will reappear instantly.
+*   **Restoring**: If you get a new phone, you simply install Klypt, select "Restore from Backup", find that file, and enter your password. All your data will reappear instantly.
 
 ================================================================================
-8️⃣ What SecureVault Does NOT Do
+8️⃣ What Klypt Does NOT Do
 ================================================================================
 
 We believe in honesty. Here is what we *don't* do:
@@ -91,7 +91,7 @@ We believe in honesty. Here is what we *don't* do:
 9️⃣ Who Is This App For?
 ================================================================================
 
-SecureVault is for people who want **Control** and **Privacy**.
+Klypt is for people who want **Control** and **Privacy**.
 
 *   It is for you if you don't trust big tech companies with your most sensitive secrets.
 *   It is for you if you want to know exactly where your data is (in your pocket).
@@ -112,8 +112,8 @@ This is the trade-off for high security. By removing the "easy" ways to get back
 1️⃣1️⃣ Summary
 ================================================================================
 
-**SecureVault protects** you from hackers, server breaches, and prying eyes.
-**SecureVault cannot protect** you from forgetting your own Master Password.
+**Klypt protects** you from hackers, server breaches, and prying eyes.
+**Klypt cannot protect** you from forgetting your own Master Password.
 
 **Your Job**:
 1.  Choose a Master Password you will remember.
@@ -122,4 +122,4 @@ This is the trade-off for high security. By removing the "easy" ways to get back
 
 If you do these three things, your digital life is secure.
 
-**Developed by Preet Dudhat**
+**Developed by Klypt Team**

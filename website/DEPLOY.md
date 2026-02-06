@@ -1,4 +1,4 @@
-# Deployment Instructions for SecureVault Website
+# Deployment Instructions for Klypt Website
 
 ## GitHub Pages (Static Export)
 

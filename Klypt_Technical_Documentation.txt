@@ -1,18 +1,18 @@
-SecureVault — Offline Password Manager
+Klypt — Offline Password Manager
 Complete Architecture, Security & Workflow Documentation
 
 ================================================================================
 1️⃣ PROJECT OVERVIEW
 ================================================================================
 
-## What is SecureVault?
-SecureVault is a high-security, local-only password manager built with Flutter. It allows users to store sensitive credentials (usernames, passwords, notes) in an encrypted vault on their own device, without relying on any third-party cloud servers.
+## What is Klypt?
+Klypt is a high-security, local-only password manager built with Flutter. It allows users to store sensitive credentials (usernames, passwords, notes) in an encrypted vault on their own device, without relying on any third-party cloud servers.
 
 ## Why was it built?
-In an era of frequent data breaches and server compromises, the "Cloud-First" model of password management presents a significant attack surface. If a central provider is hacked, millions of vaults are exposed. SecureVault was built to invert this model: by keeping data strictly offline and encrypted on the user's device, the attack surface is reduced to the physical device itself.
+In an era of frequent data breaches and server compromises, the "Cloud-First" model of password management presents a significant attack surface. If a central provider is hacked, millions of vaults are exposed. Klypt was built to invert this model: by keeping data strictly offline and encrypted on the user's device, the attack surface is reduced to the physical device itself.
 
 ## Problem Solved
-Most users reuse passwords because they cannot remember unique complex ones. Existing offline solutions are often cumbersome or lack modern UX. SecureVault bridges the gap by offering military-grade security with a modern, "Micro-App" user experience that focuses on speed and simplicity.
+Most users reuse passwords because they cannot remember unique complex ones. Existing offline solutions are often cumbersome or lack modern UX. Klypt bridges the gap by offering military-grade security with a modern, "Micro-App" user experience that focuses on speed and simplicity.
 
 ## Why Offline-First?
 Offline-first guarantees "Zero-Knowledge" by design. Data never leaves the device network interface. There is no API to intercept, no database to leak, and no server administrator who can access user keys.
@@ -25,7 +25,7 @@ Offline-first guarantees "Zero-Knowledge" by design. Data never leaves the devic
 The core philosophy is that the application "knows nothing". The Master Password is never stored in plaintext anywhere. It is only held in volatile RAM during the active session. If the user forgets their Master Password, the data remains mathematically inaccessible forever.
 
 ## No-Server Architecture
-There is no backend. The "Server" is the file system of the device. This creates a distributed security model where every user is an island. Attacking SecureVault requires attacking specific individual devices, which is resource-intensive compared to mass cloud harvesting.
+There is no backend. The "Server" is the file system of the device. This creates a distributed security model where every user is an island. Attacking Klypt requires attacking specific individual devices, which is resource-intensive compared to mass cloud harvesting.
 
 ## "No Recovery" Policy
 We explicitly rejected "Password Recovery" via email/SMS. Implementing recovery implies a backdoor or a stored key that can be unlocked by a third party. We accept the trade-off that a user losing their Master Password loses their data, in exchange for the guarantee that NO ONE else can access it.
@@ -136,7 +136,7 @@ We use **Hive** (NoSQL key-value store).
 ## Why Local Backup?
 Since there is no cloud, users need a way to migrate data or survive a factory reset. We implemented a manual file export.
 
-## format: .svb (SecureVault Backup)
+## format: .klypt (Klypt Backup)
 The file format is valid JSON data encrypted with AES-256-GCM.
 Structure: `[Salt (16 bytes)] + [Encrypted Payload (N bytes)]`
 
@@ -191,7 +191,7 @@ The app follows **Clean Architecture** principles to ensure maintainability and 
 ================================================================================
 
 *   **FLAG_SECURE**: implemented in `MainActivity.kt`.
-    *   *Effect*: Prevents the OS from creating a screenshot for the "Overview" (multitasking) screen. If you switch apps, the SecureVault preview is blank/white.
+    *   *Effect*: Prevents the OS from creating a screenshot for the "Overview" (multitasking) screen. If you switch apps, the Klypt preview is blank/white.
     *   *Effect*: Prevents screen recording apps or malware from capturing the UI.
 *   **EncryptedSharedPreferences**: Used implicitly via `flutter_secure_storage` options to ensure keys stored in `shared_prefs` xml files are actually wrapping Android Keystore keys.
 
@@ -235,8 +235,8 @@ The app follows **Clean Architecture** principles to ensure maintainability and 
 1️⃣7️⃣ FINAL SUMMARY
 ================================================================================
 
-SecureVault is an exercise in **Paranoid Engineering**. Every decision—from choosing AES-GCM to disabling cloud sync—prioritizes one thing: **User Sovereignty**.
+Klypt is an exercise in **Paranoid Engineering**. Every decision—from choosing AES-GCM to disabling cloud sync—prioritizes one thing: **User Sovereignty**.
 
 The user owns the key. The user owns the data. The code serves only as a secure vault to protect that ownership.
 
-**Developed by Preet Dudhat**
+**Developed by Klypt Team**

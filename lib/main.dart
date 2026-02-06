@@ -63,7 +63,7 @@ class _PasswordManagerAppState extends ConsumerState<PasswordManagerApp> with Wi
 
     return MaterialApp.router(
       scaffoldMessengerKey: rootScaffoldMessengerKey,
-      title: 'SecureVault',
+      title: 'Klypt',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

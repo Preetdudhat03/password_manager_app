@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -137,7 +138,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Icon(
-                    Icons.lock_open_rounded,
+                    LucideIcons.unlock,
                     size: 64,
                     color: Color(0xFFD0BCFF),
                   ),
@@ -155,7 +156,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Master Password',
-                      prefixIcon: const Icon(Icons.key),
+                      prefixIcon: const Icon(LucideIcons.key),
                       errorText: _error,
                     ),
                   ),

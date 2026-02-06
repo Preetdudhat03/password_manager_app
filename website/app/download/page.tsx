@@ -1,15 +1,15 @@
 import Link from 'next/link';
 
 export const metadata = {
-    title: "Download | SecureVault",
-    description: "Download the latest version of SecureVault for Android.",
+    title: "Download | Klypt",
+    description: "Download the latest version of Klypt for Android.",
 };
 
 export default function DownloadPage() {
     return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
             <div className="max-w-2xl w-full space-y-12">
-                <h1 className="text-4xl font-bold tracking-tight text-white">Download SecureVault</h1>
+                <h1 className="text-4xl font-bold tracking-tight text-white">Download Klypt</h1>
 
                 <div className="bg-white/5 rounded-2xl p-8 border border-white/10 shadow-2xl">
                     <Link

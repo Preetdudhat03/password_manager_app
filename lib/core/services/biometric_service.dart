@@ -4,16 +4,21 @@ class BiometricService {
   final LocalAuthentication _auth = LocalAuthentication();
 
   Future<bool> get isBiometricAvailable async {
-    final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-    final bool canAuthenticate =
-        canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
-    return canAuthenticate;
+    try {
+      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
+      return canAuthenticate;
+    } catch (e) {
+      // Handles MissingPluginException if plugin is not registered on Windows
+      return false;
+    }
   }
 
   Future<bool> authenticate() async {
     try {
       return await _auth.authenticate(
-        localizedReason: 'Scan fingerprint to unlock SecureVault',
+        localizedReason: 'Scan fingerprint to unlock Klypt',
         options: const AuthenticationOptions(
           stickyAuth: true,
           biometricOnly: false, // Allow PIN/Pattern as backup

@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/services/secure_storage_service.dart';
@@ -53,7 +55,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Icon(
-                      Icons.security_rounded,
+                      LucideIcons.shieldCheck,
                       size: 64,
                       color: Color(0xFFD0BCFF),
                     ),
@@ -79,7 +81,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       obscureText: true,
                       decoration: const InputDecoration(
                         labelText: 'Master Password',
-                        prefixIcon: Icon(Icons.key),
+                        prefixIcon: Icon(LucideIcons.key),
                       ),
                       validator: (value) {
                         if (value == null) return 'Required';
@@ -93,7 +95,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       obscureText: true,
                       decoration: const InputDecoration(
                         labelText: 'Confirm Password',
-                        prefixIcon: Icon(Icons.check),
+                        prefixIcon: Icon(LucideIcons.check),
                       ),
                       validator: (value) => 
                         value != _passwordController.text ? 'Passwords do not match' : null,
@@ -121,11 +123,15 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   Future<void> _restoreFromBackup() async {
-    // 1. Pick File
-    final result = await FilePicker.platform.pickFiles();
+    // 1. Pick File with bytes loaded
+    final result = await FilePicker.platform.pickFiles(
+      withData: true, // IMPORTANT for Web/Windows sometimes
+    );
     if (result == null) return;
     
-    final file = File(result.files.single.path!);
+    // On some platforms (web), path might be null or inaccessible.
+    // Use bytes directly if available.
+    final Uint8List fileBytes = result.files.single.bytes ?? await File(result.files.single.path!).readAsBytes();
     
     // 2. Ask for Backup Password
     final backupPass = await _promptPassword(context, 'Enter Backup Password');
@@ -139,7 +145,8 @@ class _SetupScreenState extends State<SetupScreen> {
       final crypto = EncryptionServiceImpl();
       final backup = BackupService(PasswordRepositoryImpl(), crypto);
       
-      final items = await backup.restoreBackup(file, backupPass);
+      // Pass bytes directly to restoreBackup
+      final items = await backup.restoreBackupFromBytes(fileBytes, backupPass);
       
       // 4. Ask for New Master Password (to encrypt the vault on this device)
       if (mounted) {

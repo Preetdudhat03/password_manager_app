@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Security Model | SecureVault",
+    title: "Security Model | Klypt",
     description: "Understanding Zero-Knowledge encryption and local-only security.",
 };
 

@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Backup & Recovery | SecureVault",
+    title: "Backup & Recovery | Klypt",
     description: "Critical information about data recovery and backups.",
 };
 
@@ -32,10 +32,10 @@ export default function BackupRecoveryPage() {
                     <h2 className="text-2xl font-semibold mb-4 text-white">How to Backup</h2>
                     <div className="prose prose-invert text-gray-400">
                         <ol className="list-decimal pl-5 space-y-2">
-                            <li>Open SecureVault Settings.</li>
+                            <li>Open Klypt Settings.</li>
                             <li>Select <strong>Export Encrypted Backup</strong>.</li>
                             <li>Save the resulting file to a safe location (e.g., a USB drive, Google Drive, or your PC).</li>
-                            <li>This file is strictly encrypted. It can only be imported back into SecureVault using the original Master Password.</li>
+                            <li>This file is strictly encrypted. It can only be imported back into Klypt using the original Master Password.</li>
                         </ol>
                     </div>
                 </section>

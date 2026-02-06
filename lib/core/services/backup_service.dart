@@ -36,7 +36,7 @@ class BackupService {
 
     // 6. Save File using Plugin (Pass bytes for Android/iOS support)
     final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    final fileName = 'securevault_backup_$timestamp.svb';
+    final fileName = 'klypt_backup_$timestamp.klypt';
 
     final String? result = await FilePicker.platform.saveFile(
       dialogTitle: 'Save Backup File',
@@ -62,6 +62,10 @@ class BackupService {
 
   Future<List<VaultItem>> restoreBackup(File file, String password) async {
     final bytes = await file.readAsBytes();
+    return restoreBackupFromBytes(bytes, password);
+  }
+
+  Future<List<VaultItem>> restoreBackupFromBytes(Uint8List bytes, String password) async {
     if (bytes.length < 16) throw Exception('Invalid backup file');
 
     // 1. Extract Salt

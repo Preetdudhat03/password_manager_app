@@ -7,8 +7,8 @@ import Footer from "./components/Footer";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "SecureVault | Offline Password Manager",
-  description: "A secure, zero-knowledge, offline password manager built as an engineering micro project.",
+  title: "Klypt | Offline Password Manager",
+  description: "Klypt - A secure, zero-knowledge, offline password manager built as an engineering micro project.",
 };
 
 export default function RootLayout({

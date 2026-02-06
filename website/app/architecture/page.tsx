@@ -1,6 +1,6 @@
 export const metadata = {
-    title: "Architecture | SecureVault",
-    description: "High-level technical overview of SecureVault.",
+    title: "Architecture | Klypt",
+    description: "High-level technical overview of Klypt.",
 };
 
 export default function ArchitecturePage() {
@@ -13,7 +13,7 @@ export default function ArchitecturePage() {
                     <section>
                         <h2 className="text-2xl font-semibold mb-4 text-white">Frontend Framework</h2>
                         <p className="text-gray-400 leading-relaxed">
-                            SecureVault is built using Flutter, Google's UI toolkit for building natively compiled applications. This allows for high performance and strict control over memory management, which is crucial for handling sensitive data strings securely.
+                            Klypt is built using Flutter, Google's UI toolkit for building natively compiled applications. This allows for high performance and strict control over memory management, which is crucial for handling sensitive data strings securely.
                         </p>
                     </section>
 

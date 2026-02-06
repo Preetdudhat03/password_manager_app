@@ -1,12 +1,12 @@
-# SecureVault — Offline Password Manager
+# Klypt — Offline Password Manager
 
-SecureVault is an offline-first, local-only password manager built with Flutter. It allows users to securely store credentials on their device without relying on third-party cloud servers. This project was developed as a "Micro Application" to explore advanced mobile security concepts, clean architecture, and zero-knowledge encryption principles.
+Klypt is an offline-first, local-only password manager built with Flutter. It allows users to securely store credentials on their device without relying on third-party cloud servers. This project was developed as a "Micro Application" to explore advanced mobile security concepts, clean architecture, and zero-knowledge encryption principles.
 
 ## Motivation
 
 In a digital landscape dominated by cloud-based services, data breaches are increasingly common. While centralized password managers offer convenience, they also present a centralized target for attackers.
 
-SecureVault was built to explore the opposite extreme: **Maximum Sovereignty**. By keeping all data strictly on the user's device and removing the network layer entirely, the attack surface is reduced to the physical possession of the device itself. This project serves as a practical exploration of cryptography, secure mobile storage, and privacy-by-design user experience.
+Klypt was built to explore the opposite extreme: **Maximum Sovereignty**. By keeping all data strictly on the user's device and removing the network layer entirely, the attack surface is reduced to the physical possession of the device itself. This project serves as a practical exploration of cryptography, secure mobile storage, and privacy-by-design user experience.
 
 ## Key Features
 
@@ -20,7 +20,7 @@ SecureVault was built to explore the opposite extreme: **Maximum Sovereignty**. 
 
 ## Security Model
 
-SecureVault operates on a **Zero-Knowledge** architecture. 
+Klypt operates on a **Zero-Knowledge** architecture. 
 
 1.  **Client-Side Only**: All encryption and decryption happen locally on the device.
 2.  **Volatile Master Key**: The key used to encrypt your data is derived from your Master Password using **Argon2id**. This key exists in RAM only while the app is open. It is never written to disk.
@@ -29,9 +29,9 @@ SecureVault operates on a **Zero-Knowledge** architecture.
 
 ## Backup & Recovery Philosophy
 
-Because there is no cloud synchronization, losing your phone would normally mean losing your data. To mitigate this without compromising security, SecureVault implements a **Manual Encrypted Backup** system.
+Because there is no cloud synchronization, losing your phone would normally mean losing your data. To mitigate this without compromising security, Klypt implements a **Manual Encrypted Backup** system.
 
-*   You can export your vault to a `.svb` (SecureVault Backup) file.
+*   You can export your vault to a `.klypt` (Klypt Backup) file.
 *   This file is encrypted with AES-256.
 *   It is safe to store this file on Google Drive, email it to yourself, or keep it on a USB drive.
 *   To restore, you simply load the file and enter the Master Password used to create it.
@@ -77,7 +77,7 @@ lib/
 1.  **Clone the repository**:
     ```bash
     git clone https://github.com/Start-Up-Republic-Ind/SecureVault.git
-    cd password_manager
+    cd klypt
     ```
 
 2.  **Install dependencies**:

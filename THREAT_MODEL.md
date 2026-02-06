@@ -1,7 +1,7 @@
-# Threat Model: SecureVault
+# Threat Model: Klypt
 
 ## 1. Protected Threats
-SecureVault is designated to protect against the following vectors:
+Klypt is designated to protect against the following vectors:
 
 *   **Lost/Stolen Device**: Data is AES-256 encrypted at rest. Without the Master Password (or Biometric auth), the database file is just random noise. Keys are derived using Argon2id with random salts, making brute-force attacks computationally expensive.
 *   **Offline Attacks**: Even if an attacker copies the `.hive` database file, they cannot decrypt it without the Master Key (which is not stored in the file) or the wrapped Key (which requires the Master Password to unwrap).

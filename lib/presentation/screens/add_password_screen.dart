@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -116,7 +117,7 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
         actions: [
           if (isEditing)
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(LucideIcons.trash2, color: Colors.red),
               onPressed: _delete,
             ),
         ],
@@ -142,7 +143,7 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                     controller: _usernameController,
                     decoration: const InputDecoration(
                       labelText: 'Username / Email',
-                      prefixIcon: Icon(Icons.person),
+                      prefixIcon: Icon(LucideIcons.user),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -151,17 +152,17 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.key),
+                      prefixIcon: const Icon(LucideIcons.key),
                       suffixIcon: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.refresh),
+                            icon: const Icon(LucideIcons.refreshCw),
                             onPressed: _generatePassword,
                             tooltip: 'Generate',
                           ),
                           IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                            icon: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff),
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;

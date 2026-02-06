@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Disclaimer | SecureVault",
+    title: "Disclaimer | Klypt",
     description: "Important legal and safety disclaimer.",
 };
 
@@ -10,12 +10,12 @@ export default function DisclaimerPage() {
 
             <div className="prose prose-invert prose-lg text-gray-400">
                 <p className="font-semibold text-white">
-                    Please read this disclaimer carefully before using the SecureVault application.
+                    Please read this disclaimer carefully before using the Klypt application.
                 </p>
 
                 <h3 className="text-white">Educational Purpose</h3>
                 <p>
-                    SecureVault was created as a <strong>micro project</strong> for educational and portfolio purposes. While it implements industry-standard encryption (AES-256) and security best practices, it has <strong>not</strong> undergone a third-party security audit.
+                    Klypt was created as a <strong>micro project</strong> for educational and portfolio purposes. While it implements industry-standard encryption (AES-256) and security best practices, it has <strong>not</strong> undergone a third-party security audit.
                 </p>
 
                 <h3 className="text-white">No Warranty</h3>

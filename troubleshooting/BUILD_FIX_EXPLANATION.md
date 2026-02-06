@@ -1,6 +1,6 @@
 # Build Error Troubleshooting & Solution Guide
 
-This document explains the specific errors encountered while building the **SecureVault** Android application (specifically the Release APK) and details the exact steps and commands used to resolve them.
+This document explains the specific errors encountered while building the **Klypt** Android application (specifically the Release APK) and details the exact steps and commands used to resolve them.
 
 ## 1. The Errors
 

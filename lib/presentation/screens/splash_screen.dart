@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/services/secure_storage_service.dart';
@@ -39,13 +40,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.lock_outline,
+              LucideIcons.lock,
               size: 80,
               color: Color(0xFFD0BCFF),
             ),
             const SizedBox(height: 16),
              Text(
-              'SecureVault',
+              'Klypt',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../state/vault_state.dart';
@@ -16,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('My Vault'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(LucideIcons.settings),
             onPressed: () => context.push('/settings'),
           ),
         ],
@@ -31,7 +32,7 @@ class HomeScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.security, size: 64, color: Colors.grey),
+                        const Icon(LucideIcons.shieldCheck, size: 64, color: Colors.grey),
                         const SizedBox(height: 16),
                         Text(
                           'Your vault is empty',
@@ -56,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/add_password'),
-        child: const Icon(Icons.add),
+        child: const Icon(LucideIcons.plus),
       ),
     );
   }

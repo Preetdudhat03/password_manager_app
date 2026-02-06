@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../state/auth_state.dart';
@@ -231,16 +232,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Text('Security', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           SwitchListTile(
-            secondary: const Icon(Icons.fingerprint),
+            secondary: const Icon(LucideIcons.fingerprint),
             title: const Text('Unlock with Biometrics'),
             value: _biometricEnabled,
             onChanged: _isLoading ? null : _toggleBiometrics,
           ),
           
           ListTile(
-            leading: const Icon(Icons.password),
+            leading: const Icon(LucideIcons.keyRound),
             title: const Text('Change Master Password'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(LucideIcons.chevronRight, size: 16),
             onTap: _showChangePasswordDialog,
           ),
 
@@ -252,7 +253,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Text('Appearance', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ListTile(
-            leading: const Icon(Icons.brightness_medium),
+            leading: const Icon(LucideIcons.sunMoon),
             title: const Text('Theme'),
             subtitle: Text(themeMode.toString().split('.').last.toUpperCase()),
             onTap: _showThemeDialog,
@@ -266,7 +267,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Text('Data', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ListTile(
-            leading: const Icon(Icons.download),
+            leading: const Icon(LucideIcons.download),
             title: const Text('Backup Vault'),
             subtitle: const Text('Export encrypted backup file'),
             onTap: () => _showBackupDialog(),
@@ -280,7 +281,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
              child: Text('Account', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
+            leading: const Icon(LucideIcons.logOut, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
               // Navigate to Setup screen FIRST, before auth state changes.
@@ -302,7 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'SecureVault v1.0.0\nOffline. Secure. Open.\n\nDeveloped by preet dudhat',
+              'Klypt v1.0.0\nOffline. Secure. Open.\n\nDeveloped by preet dudhat',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),

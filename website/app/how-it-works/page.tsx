@@ -1,6 +1,6 @@
 export const metadata = {
-    title: "How It Works | SecureVault",
-    description: "A simple guide to how SecureVault protects your passwords.",
+    title: "How It Works | Klypt",
+    description: "A simple guide to how Klypt protects your passwords.",
 };
 
 export default function HowItWorksPage() {
@@ -11,7 +11,7 @@ export default function HowItWorksPage() {
             <div className="space-y-12">
                 <section>
                     <p className="text-gray-400 leading-relaxed text-lg mb-8">
-                        SecureVault is designed to be simple and predictable. Here is the lifecycle of your data:
+                        Klypt is designed to be simple and predictable. Here is the lifecycle of your data:
                     </p>
 
                     <div className="relative border-l border-gray-800 ml-3 space-y-10">
@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
                             <span className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full bg-blue-500 ring-4 ring-black"></span>
                             <h3 className="text-xl font-medium text-white mb-2">3. Nothing Leaves Your Phone</h3>
                             <p className="text-gray-400">
-                                SecureVault has no internet connection code. Your encrypted data sits quietly on your device. It is never sent to a cloud server, ensuring that a server breach elsewhere cannot compromise you.
+                                Klypt has no internet connection code. Your encrypted data sits quietly on your device. It is never sent to a cloud server, ensuring that a server breach elsewhere cannot compromise you.
                             </p>
                         </div>
 

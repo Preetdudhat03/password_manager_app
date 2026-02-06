@@ -1,5 +1,5 @@
-name: password_manager
-description: A secure, personal password manager built with Flutter.
+name: klypt
+description: Klypt - Offline, encrypted password manager built with Flutter.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -24,6 +24,7 @@ dependencies:
   equatable: ^2.0.8
   share_plus: ^12.0.1
   file_picker: ^10.3.10
+  lucide_icons: ^0.257.0
 
 dev_dependencies:
   flutter_test:

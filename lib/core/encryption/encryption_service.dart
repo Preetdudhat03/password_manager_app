@@ -12,8 +12,8 @@ class EncryptionServiceImpl implements EncryptionService {
   final _algorithm = AesGcm.with256bits();
   final _kdf = Argon2id(
     parallelism: 1,
-    memory: 65536, // 64 MB
-    iterations: 2,
+    memory: 4096, // 4 MB - Faster for UI response
+    iterations: 1,
     hashLength: 32, // 256 bits
   );
 

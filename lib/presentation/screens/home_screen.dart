@@ -10,12 +10,61 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vaultItems = ref.watch(vaultListProvider);
+    final vaultItems = ref.watch(sortedVaultListProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Vault'),
         actions: [
+          PopupMenuButton<SortType>(
+            icon: const Icon(LucideIcons.arrowUpDown),
+            tooltip: 'Sort By',
+            onSelected: (SortType result) {
+              ref.read(sortProvider.notifier).state = result;
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<SortType>>[
+              const PopupMenuItem<SortType>(
+                value: SortType.dateNewest,
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.calendar, size: 18),
+                    SizedBox(width: 8),
+                    Text('Newest First'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<SortType>(
+                value: SortType.dateOldest,
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.calendarClock, size: 18),
+                    SizedBox(width: 8),
+                    Text('Oldest First'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<SortType>(
+                value: SortType.alphaAZ,
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.arrowDown, size: 18),
+                    SizedBox(width: 8),
+                    Text('A-Z'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<SortType>(
+                value: SortType.alphaZA,
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.arrowUp, size: 18),
+                    SizedBox(width: 8),
+                    Text('Z-A'),
+                  ],
+                ),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(LucideIcons.settings),
             onPressed: () => context.push('/settings'),

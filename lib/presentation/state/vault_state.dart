@@ -13,6 +13,39 @@ final vaultListProvider = StateNotifierProvider<VaultListNotifier, List<VaultIte
   return VaultListNotifier(repository);
 });
 
+enum SortType {
+  dateNewest,
+  dateOldest,
+  alphaAZ,
+  alphaZA,
+}
+
+final sortProvider = StateProvider<SortType>((ref) => SortType.dateNewest);
+
+final sortedVaultListProvider = Provider<List<VaultItem>>((ref) {
+  final items = ref.watch(vaultListProvider);
+  final sortType = ref.watch(sortProvider);
+
+  // We create a new list to avoid mutating the state directly if it was mutable (though usually fine here)
+  final sortedItems = List<VaultItem>.from(items);
+
+  switch (sortType) {
+    case SortType.dateNewest:
+      sortedItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      break;
+    case SortType.dateOldest:
+      sortedItems.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+      break;
+    case SortType.alphaAZ:
+      sortedItems.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      break;
+    case SortType.alphaZA:
+      sortedItems.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
+      break;
+  }
+  return sortedItems;
+});
+
 class VaultListNotifier extends StateNotifier<List<VaultItem>> {
   final PasswordRepository _repository;
 

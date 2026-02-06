@@ -99,6 +99,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                       validator: (value) => 
                         value != _passwordController.text ? 'Passwords do not match' : null,
+                      onFieldSubmitted: (_) => _createMasterPassword(),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
@@ -217,6 +218,7 @@ class _SetupScreenState extends State<SetupScreen> {
           controller: controller,
           obscureText: true,
           decoration: const InputDecoration(labelText: 'Password'),
+          onSubmitted: (value) => Navigator.pop(context, value),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),

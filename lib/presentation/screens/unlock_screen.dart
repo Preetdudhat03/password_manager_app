@@ -159,6 +159,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                       prefixIcon: const Icon(LucideIcons.key),
                       errorText: _error,
                     ),
+                    onSubmitted: (_) => _unlock(),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(

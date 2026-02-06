@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../widgets/smart_copy_actions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -139,6 +140,18 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                     textCapitalization: TextCapitalization.sentences,
                   ),
                   const SizedBox(height: 16),
+                  
+                  // SMART COPY ACTIONS (Only when viewing/editing existing item)
+                  if (isEditing) ...[
+                    SmartCopyActions(
+                      username: _usernameController.text,
+                      password: _passwordController.text,
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 24),
+                  ],
+                  
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(

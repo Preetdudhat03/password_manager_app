@@ -7,7 +7,9 @@ import '../../domain/entities/vault_item.dart';
 import '../encryption/encryption_service.dart';
 
 class SecureStorageService {
-  // Use encryptedSharedPreferences: true by default for ALL operations to ensure consistency
+  // Use consistent options for ALL operations across ALL platforms to avoid key mismatches
+  // On Web/Windows, encryptedSharedPreferences is ignored but does no harm.
+  // We make this static or consistent to ensure the same storage is accessed.
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );

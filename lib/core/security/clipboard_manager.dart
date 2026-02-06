@@ -77,7 +77,8 @@ class ClipboardManager extends StateNotifier<ClipboardState> with WidgetsBinding
 
     // 2. Write to System Clipboard
     // 2. Write to System Clipboard
-    if (!kIsWeb && Platform.isWindows) {
+    // 2. Write to System Clipboard
+    if (!kIsWeb && (Platform.isWindows || Platform.isAndroid)) {
       try {
         const platform = MethodChannel('klypt/clipboard');
         await platform.invokeMethod('writeSecure', text);

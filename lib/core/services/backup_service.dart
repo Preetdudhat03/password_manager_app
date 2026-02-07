@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -72,18 +73,33 @@ class BackupService {
     final salt = bytes.sublist(0, 16);
     final encryptedPayload = bytes.sublist(16);
 
-    // 2. Derive Key
-    final key = await _encryptionService.deriveKey(password, salt);
+    // 3. Decrypt with Fallback Strategy
+    // Try current fast params first, then legacy parameters.
+    final paramsToTry = [
+      (mem: 4096, iter: 1),   // Current (Fast)
+      (mem: 16384, iter: 2),  // Previous (Medium)
+      (mem: 65536, iter: 2),  // Legacy (Strong)
+    ];
 
-    // 3. Decrypt
-    try {
-      final jsonString = await _encryptionService.decrypt(encryptedPayload, key);
-      final List<dynamic> jsonList = jsonDecode(jsonString);
-      
-      return jsonList.map((e) => _mapToItem(e)).toList();
-    } catch (e) {
-      throw Exception('Decryption failed. Wrong password?');
+    for (final p in paramsToTry) {
+      debugPrint('BackupRestore: Trying params memory=${p.mem}, iter=${p.iter}...');
+      try {
+        final key = await _encryptionService.deriveKeyWithParams(password, salt, p.mem, p.iter);
+        final jsonString = await _encryptionService.decrypt(encryptedPayload, key);
+        final List<dynamic> jsonList = jsonDecode(jsonString);
+        debugPrint('BackupRestore: Success with memory=${p.mem}!');
+        return jsonList.map((e) => _mapToItem(e)).toList();
+      } catch (e) {
+        if (e.toString().contains('SecretBoxAuthenticationError')) {
+           debugPrint('BackupRestore: Wrong password for params (mem=${p.mem}) - expected.');
+        } else {
+           debugPrint('BackupRestore: Failed with memory=${p.mem}. Error: $e');
+        }
+        continue;
+      }
     }
+    
+    throw Exception('Restore failed. The password provided is incorrect.');
   }
 
   VaultItem _mapToItem(Map<String, dynamic> map) {

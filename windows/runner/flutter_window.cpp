@@ -75,6 +75,14 @@ bool FlutterWindow::OnCreate() {
             }
 
             CloseClipboard();
+            CloseClipboard();
+            result->Success();
+        } else if (call.method_name() == "clearSecure") {
+            if (OpenClipboard(nullptr)) {
+                EmptyClipboard();
+                CloseClipboard();
+            }
+            // Even if OpenClipboard fails, we consider it 'done' or best effort.
             result->Success();
         } else {
           result->NotImplemented();

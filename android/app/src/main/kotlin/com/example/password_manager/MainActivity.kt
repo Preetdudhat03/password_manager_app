@@ -39,11 +39,11 @@ class MainActivity: FlutterFragmentActivity() {
                 result.success(null)
             } else if (call.method == "clearSecure") {
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    // API 28+ supports explicit clearing
+                if (Build.VERSION.SDK_INT >= 28) {
+                    // API 28+ supports explicit clearing without triggering "Copied" toast
                     clipboard.clearPrimaryClip()
                 } else {
-                    // Fallback for older Android
+                    // Fallback for older Android (might show toast, but unavoidable)
                     clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
                 }
                 result.success(null)

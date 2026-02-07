@@ -4,6 +4,7 @@ import 'package:cryptography/cryptography.dart';
 
 abstract class EncryptionService {
   Future<SecretKey> deriveKey(String password, List<int> salt);
+  Future<SecretKey> deriveKeyWithParams(String password, List<int> salt, int memory, int iterations);
   Future<List<int>> encrypt(String plainText, SecretKey key);
   Future<String> decrypt(List<int> data, SecretKey key);
 }
@@ -19,11 +20,21 @@ class EncryptionServiceImpl implements EncryptionService {
 
   @override
   Future<SecretKey> deriveKey(String password, List<int> salt) async {
-    final secretKey = await _kdf.deriveKeyFromPassword(
+    return deriveKeyWithParams(password, salt, 4096, 1);
+  }
+
+  @override
+  Future<SecretKey> deriveKeyWithParams(String password, List<int> salt, int memory, int iterations) async {
+    final kdf = Argon2id(
+      parallelism: 1,
+      memory: memory,
+      iterations: iterations,
+      hashLength: 32,
+    );
+    return kdf.deriveKeyFromPassword(
       password: password,
       nonce: salt,
     );
-    return secretKey;
   }
 
   @override

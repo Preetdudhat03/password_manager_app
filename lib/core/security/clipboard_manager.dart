@@ -126,6 +126,16 @@ class ClipboardManager extends StateNotifier<ClipboardState> with WidgetsBinding
   Future<void> _clearClipboardInternal() async {
     // Some platforms don't support passing null or empty, but empty string is standard clear.
     try {
+      if (!kIsWeb && (Platform.isWindows || Platform.isAndroid)) {
+         const platform = MethodChannel('klypt/clipboard');
+         try {
+            await platform.invokeMethod('clearSecure');
+            return; // Success
+         } catch (e) {
+            debugPrint('Native clear failed, falling back: $e');
+         }
+      }
+      // Fallback or Standard (iOS/Web/Mac/Linux)
       await Clipboard.setData(const ClipboardData(text: ''));
     } catch (e) {
       debugPrint('Failed to clear clipboard: $e');

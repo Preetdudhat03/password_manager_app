@@ -90,28 +90,40 @@ class SecureStorageService {
     final salt = base64Decode(saltStr);
     final verifierEncrypted = base64Decode(verifierStr);
     
-    final masterKey = await _encryptionService.deriveKey(effectivePassword, salt);
-    
-    // Try decrypt verifier
-    try {
-      final decryptedVerifier = await _encryptionService.decrypt(verifierEncrypted, masterKey);
-      if (decryptedVerifier != 'VERIFIED') {
-        throw Exception("Incorrect password (verifier mismatch)");
-      }
-    } catch (e) {
-      // Differentiate between generic crypto error and logic error
-      if (e.toString().contains('Incorrect password')) rethrow;
-      throw Exception("Incorrect password or decryption error: $e");
-    }
+    // KDF Params to try (Fast -> Medium -> Legacy)
+    // We assume the user creates new vaults with Fast, but might be unlocking an old one.
+    final paramsToTry = [
+      (mem: 4096, iter: 1),   // Current (Fast)
+      (mem: 16384, iter: 2),  // Previous (Medium)
+      (mem: 65536, iter: 2),  // Legacy (Strong)
+    ];
 
-    // Unwrap Hive Key
-    try {
-      final wrappedKey = base64Decode(wrappedKeyStr);
-      final hiveKeyBase64 = await _encryptionService.decrypt(wrappedKey, masterKey);
-      return base64Decode(hiveKeyBase64);
-    } catch (e) {
-      throw Exception("Failed to unwrap vault key: $e");
+    for (final p in paramsToTry) {
+      try {
+        final masterKey = await _encryptionService.deriveKeyWithParams(effectivePassword, salt, p.mem, p.iter);
+        
+        // Try decrypt verifier
+        final decryptedVerifier = await _encryptionService.decrypt(verifierEncrypted, masterKey);
+        
+        if (decryptedVerifier == 'VERIFIED') {
+           // Success! FOUND THE CORRECT KEY.
+           // Now unwrap the Hive Key
+           try {
+             final wrappedKey = base64Decode(wrappedKeyStr);
+             final hiveKeyBase64 = await _encryptionService.decrypt(wrappedKey, masterKey);
+             return base64Decode(hiveKeyBase64);
+           } catch (e) {
+             throw Exception("Verifier success but Vault Key unwrapping failed: $e");
+           }
+        }
+      } catch (e) {
+        // Continue to next param set
+        continue;
+      }
     }
+    
+    // If loop finishes without return, all failed
+    throw Exception("Incorrect password");
   }
 
   /// Change Master Password

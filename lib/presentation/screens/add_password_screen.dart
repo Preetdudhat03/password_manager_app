@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../widgets/smart_copy_actions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,14 +43,20 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
     super.dispose();
   }
 
-  void _generatePassword() {
-    // Simple generator for now
-    // In real app, open Generator BottomSheet
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$%^&*';
-    final random = DateTime.now().microsecondsSinceEpoch;
-    // Just a placeholder "random" generation logic
-    final generated = List.generate(16, (index) => chars[(random + index * 7) % chars.length]).join();
-    _passwordController.text = generated;
+  void _showGeneratorSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return _PasswordGeneratorSheet(
+          onSelect: (password) {
+            _passwordController.text = password;
+            // Also update the obscure state to visible so they can see what they picked?
+            // User requirement didn't specify, but it's good UX.
+            // keeping it obscured is safer though.
+          },
+        );
+      },
+    );
   }
 
   Future<void> _save() async {
@@ -171,7 +178,7 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                         children: [
                           IconButton(
                             icon: const Icon(LucideIcons.refreshCw),
-                            onPressed: _generatePassword,
+                            onPressed: _showGeneratorSheet,
                             tooltip: 'Generate',
                           ),
                           IconButton(
@@ -206,6 +213,156 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PasswordGeneratorSheet extends StatefulWidget {
+  final ValueChanged<String> onSelect;
+  const _PasswordGeneratorSheet({required this.onSelect});
+
+  @override
+  State<_PasswordGeneratorSheet> createState() => _PasswordGeneratorSheetState();
+}
+
+class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
+  String _generated = '';
+  double _length = 16;
+  bool _useSymbols = true;
+  bool _useNumbers = true;
+  bool _useUppercase = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _generate();
+  }
+
+  void _generate() {
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const symbols = '!@#\$%^&*()_+-=[]{}|;:,.<>?';
+
+    String chars = lower;
+    if (_useUppercase) chars += upper;
+    if (_useNumbers) chars += numbers;
+    if (_useSymbols) chars += symbols;
+
+    // Fallback if nothing selected
+    if (chars.isEmpty) chars = lower;
+
+    final random = Random.secure();
+    setState(() {
+      _generated = List.generate(
+        _length.toInt(), 
+        (index) => chars[random.nextInt(chars.length)],
+      ).join();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Generate Password',
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            ),
+            child: Text(
+              _generated,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: _length,
+                  min: 8,
+                  max: 32,
+                  divisions: 24,
+                  label: _length.round().toString(),
+                  onChanged: (v) {
+                    setState(() => _length = v);
+                    _generate();
+                  },
+                ),
+              ),
+              Text('${_length.toInt()} chars'),
+            ],
+          ),
+          const SizedBox(height: 16),
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              FilterChip(
+                label: const Text('ABC'), 
+                selected: _useUppercase, 
+                onSelected: (v) { setState(() => _useUppercase = v); _generate(); }
+              ),
+              FilterChip(
+                label: const Text('123'), 
+                selected: _useNumbers, 
+                onSelected: (v) { setState(() => _useNumbers = v); _generate(); }
+              ),
+              FilterChip(
+                label: const Text('#@!'), 
+                selected: _useSymbols, 
+                onSelected: (v) { setState(() => _useSymbols = v); _generate(); }
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _generate,
+                  icon: const Icon(LucideIcons.refreshCw),
+                  label: const Text('Regenerate'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () {
+                    widget.onSelect(_generated);
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(LucideIcons.check),
+                  label: const Text('Use Password'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

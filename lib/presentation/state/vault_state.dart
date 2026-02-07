@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/vault_item.dart';
 import '../../domain/repositories/password_repository.dart';
 import '../../core/services/vault_service_locator.dart';
+import '../../domain/usecases/filter_vault_items.dart';
 
 import '../state/auth_state.dart';
 
@@ -44,6 +45,19 @@ final sortedVaultListProvider = Provider<List<VaultItem>>((ref) {
       break;
   }
   return sortedItems;
+});
+
+// SEARCH STATE MANAGEMENT
+final vaultSearchQueryProvider = StateProvider<String>((ref) => '');
+
+final filteredVaultListProvider = Provider<List<VaultItem>>((ref) {
+  final query = ref.watch(vaultSearchQueryProvider);
+  final items = ref.watch(sortedVaultListProvider);
+
+  if (query.isEmpty) return items;
+
+  // Use the usecase for clean separation
+  return FilterVaultItems()(items, query);
 });
 
 class VaultListNotifier extends StateNotifier<List<VaultItem>> {

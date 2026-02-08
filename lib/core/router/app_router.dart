@@ -83,6 +83,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           markdownContent: LegalDocuments.termsAndConditions,
         ),
       ),
+      GoRoute(
+        path: '/security',
+        builder: (context, state) => const LegalDocumentScreen(
+          title: 'Security Overview',
+          markdownContent: LegalDocuments.securityOverview,
+        ),
+      ),
     ],
   );
 });

@@ -119,4 +119,29 @@ We reserve the right to modify these Terms and Conditions at any time. Your cont
 ## 10. Governing Law
 These Terms shall be governed by and construed in accordance with the laws of the developer's jurisdiction, without regard to its conflict of law provisions.
 """;
+
+  static const String securityOverview = """
+# Security Overview
+
+## 🔐 Your Data Is Yours Alone
+Klypt is designed to protect your data locally on this device. We do not use cloud servers, we do not track you, and we do not require an account.
+
+## 🧠 How Your Data Is Protected
+*   **Local Encryption:** Your passwords are encrypted with AES-256 before they are ever saved.
+*   **Master Password:** Your Master Password is the only key. It is never stored or sent anywhere.
+*   **Biometrics:** You can optionally use your fingerprint or face unlock for quick access, secured by your device's hardware.
+
+## 👁 What We Cannot See
+*   **Zero Knowledge:** As the developers, we have absolutely no access to your vault.
+*   **No "Backdoor":** Your data stays on your device. We cannot see it, decrypt it, or recover it for you.
+
+## ⚠️ Your Responsibility
+Because we can't see your data, we can't help you retrieve it if you lose the key.
+*   **Remember Your Password:** If you forget your Master Password, your data is lost forever.
+*   **Create Backups:** Regularly export your vault to a safe location (like a USB drive or cloud storage you trust) to protect against losing your phone.
+
+## 🔗 Learn More
+For a detailed explanation of Klypt’s security model, visit:
+[klypt.vercel.app/security](https://klypt.vercel.app/security)
+""";
 }

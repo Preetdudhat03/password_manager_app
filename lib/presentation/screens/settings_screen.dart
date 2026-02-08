@@ -306,6 +306,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Text('Legal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ListTile(
+            leading: const Icon(LucideIcons.lock),
+            title: const Text('Security Model'),
+            trailing: const Icon(LucideIcons.chevronRight, size: 16),
+            onTap: () => context.push('/security'),
+          ),
+          ListTile(
             leading: const Icon(LucideIcons.shieldCheck),
             title: const Text('Privacy Policy'),
             trailing: const Icon(LucideIcons.chevronRight, size: 16),

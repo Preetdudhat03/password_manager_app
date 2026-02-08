@@ -43,10 +43,15 @@ class BackupService {
       dialogTitle: 'Save Backup File',
       fileName: fileName,
       type: FileType.any,
-      bytes: fileBytes, // Pass bytes directly
     );
 
-    return result != null;
+    if (result != null) {
+      final file = File(result);
+      await file.writeAsBytes(fileBytes);
+      return true;
+    }
+
+    return false;
   }
 
   Map<String, dynamic> _itemToMap(VaultItem item) {

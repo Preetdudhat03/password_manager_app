@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../widgets/smart_copy_actions.dart';
+import '../widgets/password_visibility_toggle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -181,11 +182,11 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                             onPressed: _showGeneratorSheet,
                             tooltip: 'Generate',
                           ),
-                          IconButton(
-                            icon: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff),
-                            onPressed: () {
+                          // Protected Reveal Toggle
+                          PasswordVisibilityToggle(
+                            onVisibilityChanged: (isVisible) {
                               setState(() {
-                                _obscurePassword = !_obscurePassword;
+                                _obscurePassword = !isVisible;
                               });
                             },
                           ),

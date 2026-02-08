@@ -10,6 +10,8 @@ import '../../presentation/screens/settings_screen.dart';
 import '../../presentation/screens/add_password_screen.dart';
 import '../../domain/entities/vault_item.dart';
 import '../../presentation/state/auth_state.dart';
+import '../../presentation/screens/legal_document_screen.dart';
+import '../../core/constants/legal_documents.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Use refreshListenable to avoid rebuilding GoRouter on auth changes
@@ -66,6 +68,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           final item = state.extra as VaultItem;
           return AddPasswordScreen(itemToEdit: item);
         },
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) => const LegalDocumentScreen(
+          title: 'Privacy Policy',
+          markdownContent: LegalDocuments.privacyPolicy,
+        ),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, state) => const LegalDocumentScreen(
+          title: 'Terms & Conditions',
+          markdownContent: LegalDocuments.termsAndConditions,
+        ),
       ),
     ],
   );

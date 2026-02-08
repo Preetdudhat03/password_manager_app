@@ -299,6 +299,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           
           const Divider(),
+
+          // Legal Section
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('Legal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ListTile(
+            leading: const Icon(LucideIcons.shieldCheck),
+            title: const Text('Privacy Policy'),
+            trailing: const Icon(LucideIcons.chevronRight, size: 16),
+            onTap: () => context.push('/privacy'),
+          ),
+          ListTile(
+            leading: const Icon(LucideIcons.fileText),
+            title: const Text('Terms & Conditions'),
+            trailing: const Icon(LucideIcons.chevronRight, size: 16),
+            onTap: () => context.push('/terms'),
+          ),
+          
+          const Divider(),
           
           const Padding(
             padding: EdgeInsets.all(16),

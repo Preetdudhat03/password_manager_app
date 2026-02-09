@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/services/secure_storage_service.dart';
+import '../widgets/brand_logo.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -34,22 +35,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check system brightness directly since theme might not be fully ready/switched yet,
+    // or use Theme.of(context).scaffoldBackgroundColor if reliable.
+    // However, splash screens often default to system theme.
+    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0B0F1A) : Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              LucideIcons.lock,
-              size: 80,
-              color: Color(0xFFD0BCFF),
-            ),
+            // Balance the text below to make the logo visually centered
+            const SizedBox(height: 48), 
+            const BrandLogo(width: 150),
             const SizedBox(height: 16),
              Text(
               'Klypt',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
             ),
           ],

@@ -35,20 +35,33 @@ class BackupService {
     // 5. Combine Salt + Data
     final fileBytes = Uint8List.fromList([...salt, ...encryptedBytes]);
 
-    // 6. Save File using Plugin (Pass bytes for Android/iOS support)
+    // 6. Save File using Plugin
     final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
     final fileName = 'klypt_backup_$timestamp.klypt';
 
-    final String? result = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Backup File',
-      fileName: fileName,
-      type: FileType.any,
-    );
+    try {
+      final String? result = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save Backup File',
+        fileName: fileName,
+        type: FileType.any,
+        bytes: fileBytes, // Critical: Pass bytes for Android/iOS "Save As" to work
+      );
 
-    if (result != null) {
-      final file = File(result);
-      await file.writeAsBytes(fileBytes);
-      return true;
+      // If bytes were passed to saveFile, the plugin handles writing.
+      // We just need to check if a path was returned (meaning success/not cancelled).
+      if (result != null) {
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Backup save error: $e');
+      // Fallback: If SaveFile fails (e.g. old OS), try Share
+      if (Platform.isAndroid || Platform.isIOS) {
+         final tempDir = await getTemporaryDirectory();
+         final file = File('${tempDir.path}/$fileName');
+         await file.writeAsBytes(fileBytes);
+         final result = await Share.shareXFiles([XFile(file.path)], text: 'Klypt Backup');
+         return result.status == ShareResultStatus.success || result.status == ShareResultStatus.dismissed;
+      }
     }
 
     return false;

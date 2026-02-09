@@ -10,6 +10,7 @@ import '../../core/encryption/encryption_service.dart';
 import '../../core/services/backup_service.dart';
 import '../../data/repositories/password_repository_impl.dart';
 import '../../domain/entities/vault_item.dart';
+import '../widgets/brand_logo.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -54,11 +55,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      LucideIcons.shieldCheck,
-                      size: 64,
-                      color: Color(0xFFD0BCFF),
-                    ),
+                    //const BrandLogo(width: 150),
                     const SizedBox(height: 32),
                     Text(
                       'Create Master Password',

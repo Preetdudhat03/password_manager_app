@@ -9,6 +9,7 @@ import '../../core/services/vault_service_locator.dart';
 import '../../domain/entities/vault_item.dart';
 import '../../domain/repositories/password_repository.dart';
 import '../state/auth_state.dart';
+import '../widgets/brand_logo.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
   const UnlockScreen({super.key});
@@ -137,11 +138,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    LucideIcons.unlock,
-                    size: 64,
-                    color: Color(0xFFD0BCFF),
-                  ),
+                  //const BrandLogo(width: 150),
                   const SizedBox(height: 32),
                   Text(
                     'Unlock Vault',

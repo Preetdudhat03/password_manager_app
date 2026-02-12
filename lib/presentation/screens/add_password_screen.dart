@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../widgets/smart_copy_actions.dart';
-import '../widgets/password_visibility_toggle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -168,6 +167,7 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -182,19 +182,35 @@ class _AddPasswordScreenState extends ConsumerState<AddPasswordScreen> {
                             onPressed: _showGeneratorSheet,
                             tooltip: 'Generate',
                           ),
-                          // Protected Reveal Toggle
-                          PasswordVisibilityToggle(
-                            onVisibilityChanged: (isVisible) {
+                          IconButton(
+                            icon: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff),
+                            onPressed: () {
                               setState(() {
-                                _obscurePassword = !isVisible;
+                                _obscurePassword = !_obscurePassword;
                               });
                             },
+                            tooltip: _obscurePassword ? 'Show Password' : 'Hide Password',
                           ),
                         ],
                       ),
                     ),
                     validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                    onChanged: (_) => setState(() {}),
                   ),
+                  
+                  // Security Analysis Section
+                  if (_passwordController.text.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _SecurityAnalysis(
+                      password: _passwordController.text,
+                      originalDate: widget.itemToEdit?.updatedAt,
+                      otherPasswords: ref.read(vaultListProvider)
+                          .where((item) => item.id != widget.itemToEdit?.id)
+                          .map((e) => e.password)
+                          .toList(),
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _notesController,
@@ -233,6 +249,7 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
   bool _useSymbols = true;
   bool _useNumbers = true;
   bool _useUppercase = true;
+  bool _excludeAmbiguous = false;
 
   @override
   void initState() {
@@ -245,11 +262,18 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
     const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '0123456789';
     const symbols = '!@#\$%^&*()_+-=[]{}|;:,.<>?';
+    const ambiguous = 'O0lI';
 
     String chars = lower;
     if (_useUppercase) chars += upper;
     if (_useNumbers) chars += numbers;
     if (_useSymbols) chars += symbols;
+
+    if (_excludeAmbiguous) {
+      for (var char in ambiguous.split('')) {
+        chars = chars.replaceAll(char, '');
+      }
+    }
 
     // Fallback if nothing selected
     if (chars.isEmpty) chars = lower;
@@ -261,6 +285,18 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
         (index) => chars[random.nextInt(chars.length)],
       ).join();
     });
+  }
+
+  Color _getStrengthColor() {
+    if (_generated.length < 12) return Colors.red;
+    if (_generated.length < 16) return Colors.orange;
+    return Colors.green;
+  }
+
+  String _getStrengthText() {
+    if (_generated.length < 12) return 'Weak';
+    if (_generated.length < 16) return 'Good';
+    return 'Strong';
   }
 
   @override
@@ -288,15 +324,36 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             ),
-            child: Text(
-              _generated,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Text(
+                  _generated,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Strength: ',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Text(
+                      _getStrengthText(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: _getStrengthColor(),
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -306,8 +363,8 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
                 child: Slider(
                   value: _length,
                   min: 8,
-                  max: 32,
-                  divisions: 24,
+                  max: 64,
+                  divisions: 56,
                   label: _length.round().toString(),
                   onChanged: (v) {
                     setState(() => _length = v);
@@ -319,7 +376,7 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
             ],
           ),
           const SizedBox(height: 16),
-           Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               FilterChip(
@@ -339,7 +396,17 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Exclude Ambiguous (O, 0, l, I)'),
+            value: _excludeAmbiguous,
+            controlAffinity: ListTileControlAffinity.leading,
+            onChanged: (v) {
+              setState(() => _excludeAmbiguous = v ?? false);
+              _generate();
+            },
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -363,6 +430,155 @@ class _PasswordGeneratorSheetState extends State<_PasswordGeneratorSheet> {
             ],
           ),
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _SecurityAnalysis extends StatelessWidget {
+  final String password;
+  final DateTime? originalDate;
+  final List<String> otherPasswords;
+
+  const _SecurityAnalysis({
+    required this.password,
+    required this.otherPasswords,
+    this.originalDate,
+  });
+
+  bool get _isRepeated => otherPasswords.contains(password);
+
+  bool get _isOld {
+    if (originalDate == null) return false;
+    final diff = DateTime.now().difference(originalDate!);
+    return diff.inDays > 90;
+  }
+
+  int get _strengthScore {
+    int score = 0;
+    if (password.isEmpty) return 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (RegExp(r'[A-Z]').hasMatch(password) && RegExp(r'[0-9]').hasMatch(password)) score++;
+    if (RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) score++;
+    if (score > 4) score = 4;
+    return score;
+  }
+
+  bool get _isWeak {
+    if (password.length < 8) return true;
+    // Simple heuristic: if only numbers or only letters, it's weak
+    if (RegExp(r'^[0-9]+$').hasMatch(password)) return true;
+    if (RegExp(r'^[a-zA-Z]+$').hasMatch(password)) return true;
+    return false;
+  }
+
+  Color _getScoreColor(int score) {
+    if (score <= 1) return Colors.red;
+    if (score == 2) return Colors.orange;
+    if (score == 3) return Colors.blue;
+    return Colors.green;
+  }
+
+  String _getScoreLabel(int score) {
+    if (score <= 1) return 'Weak';
+    if (score == 2) return 'Fair';
+    if (score == 3) return 'Good';
+    return 'Strong';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Check weak based on score or heuristic
+    final score = _strengthScore;
+    final isWeak = _isWeak || score <= 1;
+    final isOld = _isOld;
+    final isRepeated = _isRepeated;
+
+    // Calculate display score (0-4)
+    // If weak by heuristic but score > 1, maybe cap it?
+    // Let's stick to score mainly.
+    // Actually, "Weak" label logic:
+    
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(LucideIcons.shieldCheck, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Security Check',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              Text(
+                _getScoreLabel(score),
+                style: TextStyle(
+                  color: _getScoreColor(score),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: (score == 0 && password.isNotEmpty) ? 0.1 : score / 4,
+              backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+              valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(score)),
+              minHeight: 4,
+            ),
+          ),
+          if (isRepeated || isWeak || isOld) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (isRepeated)
+                  Chip(
+                    avatar: const Icon(LucideIcons.copy, size: 14, color: Colors.white),
+                    label: const Text('Repeated', style: TextStyle(fontSize: 10, color: Colors.white)),
+                    backgroundColor: Colors.red,
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    labelPadding: const EdgeInsets.only(right: 4),
+                  ),
+                if (isWeak)
+                  Chip(
+                    avatar: const Icon(LucideIcons.alertCircle, size: 14, color: Colors.white),
+                    label: const Text('Weak', style: TextStyle(fontSize: 10, color: Colors.white)),
+                    backgroundColor: Colors.orange,
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    labelPadding: const EdgeInsets.only(right: 4),
+                  ),
+                if (isOld)
+                  Chip(
+                    avatar: const Icon(LucideIcons.clock, size: 14, color: Colors.white),
+                    label: const Text('Old (>90d)', style: TextStyle(fontSize: 10, color: Colors.white)),
+                    backgroundColor: Colors.amber[800],
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    labelPadding: const EdgeInsets.only(right: 4),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );

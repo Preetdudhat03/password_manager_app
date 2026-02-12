@@ -426,11 +426,33 @@ class _VaultItemCardState extends State<_VaultItemCard> {
       onLongPressCancel: () => _removeOverlay(),
       child: Card(
         child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-            child: Text(
-              widget.item.title.isNotEmpty ? widget.item.title[0].toUpperCase() : '?',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primaryContainer,
+                  Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                widget.item.title.isNotEmpty ? widget.item.title[0].toUpperCase() : '?',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+              ),
             ),
           ),
           title: Text(widget.item.title),

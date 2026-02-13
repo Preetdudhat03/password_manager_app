@@ -9,6 +9,8 @@ import 'core/utils/globals.dart';
 import 'presentation/state/theme_provider.dart';
 
 import 'presentation/state/auth_state.dart';
+import 'core/services/update_service.dart';
+import 'presentation/widgets/update_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +71,52 @@ class _PasswordManagerAppState extends ConsumerState<PasswordManagerApp> with Wi
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        return UpdateCheckWrapper(child: child!);
+      },
     );
   }
 }
+
+class UpdateCheckWrapper extends StatefulWidget {
+  final Widget child;
+  const UpdateCheckWrapper({super.key, required this.child});
+
+  @override
+  State<UpdateCheckWrapper> createState() => _UpdateCheckWrapperState();
+}
+
+class _UpdateCheckWrapperState extends State<UpdateCheckWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdates();
+    });
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      final updateService = UpdateService();
+      // Auto-check respects the 24h cache rule
+      final result = await updateService.checkForUpdate(isAutoCheck: true);
+
+      if (!mounted) return;
+
+      if (result.status == UpdateStatus.updateAvailable && result.newVersion != null) {
+        showDialog(
+          context: context,
+          builder: (context) => UpdateDialog(versionInfo: result.newVersion!),
+        );
+      }
+    } catch (_) {
+      // Fail silently for background checks
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+

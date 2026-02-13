@@ -10,6 +10,8 @@ import '../../core/encryption/encryption_service.dart';
 import '../../core/services/vault_service_locator.dart';
 import '../../core/utils/globals.dart';
 import '../state/theme_provider.dart';
+import '../../core/services/update_service.dart';
+import '../widgets/update_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -226,6 +228,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       body: ListView(
         children: [
+          // System Section
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('System', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ListTile(
+            leading: const Icon(LucideIcons.refreshCw),
+            title: const Text('Check for Updates'),
+            onTap: _isLoading ? null : _checkForUpdates,
+          ),
+          
+          const Divider(),
+
           // Security Section
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -418,6 +433,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _checkForUpdates() async {
+    setState(() => _isLoading = true);
+    try {
+      final updateService = UpdateService();
+      // Manual check ignores cache
+      final result = await updateService.checkForUpdate(isAutoCheck: false);
+      
+      if (!mounted) return;
+
+      if (result.status == UpdateStatus.updateAvailable && result.newVersion != null) {
+         showDialog(
+          context: context,
+          builder: (context) => UpdateDialog(versionInfo: result.newVersion!),
+         );
+      } else if (result.status == UpdateStatus.upToDate) {
+          showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Up to Date'),
+            content: const Text('You are using the latest version of Klypt.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+         );
+      } else {
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text(result.errorMessage ?? 'Update check failed')),
+         );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Error checking for updates')),
+         );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
 }

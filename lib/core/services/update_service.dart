@@ -105,22 +105,34 @@ class UpdateService {
   bool _isNewerVersion(AppVersionInfo remote, String localVersionStr, int localBuild) {
     try {
       // 1. Compare semantic version structure (major.minor.patch)
-      // Normalize versions (e.g., 1.0 -> 1.0.0) isn't strictly needed if we assume semver compliance
-      // but let's be robust
       List<int> remoteParts = remote.version.split('.').map((e) => int.tryParse(e) ?? 0).toList();
       List<int> localParts = localVersionStr.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
       for (int i = 0; i < remoteParts.length && i < localParts.length; i++) {
-          if (remoteParts[i] > localParts[i]) return true;
-          if (remoteParts[i] < localParts[i]) return false;
+        if (remoteParts[i] > localParts[i]) return true;
+        if (remoteParts[i] < localParts[i]) return false;
       }
 
-      // If one is longer than the other (e.g. 1.2 vs 1.2.1)
+      // If one is longer (e.g. 1.2 vs 1.2.1), we need to check if the extra parts are non-zero.
+      // But usually 1.2.0 is same as 1.2. The loop above handles the common prefix.
+      // If we are here, the common parts are equal.
+      
       if (remoteParts.length != localParts.length) {
-         return remoteParts.length > localParts.length;
+          // If remote is longer (1.2.1 vs 1.2), checking if extra part is > 0
+          if (remoteParts.length > localParts.length) {
+              for (int i = localParts.length; i < remoteParts.length; i++) {
+                  if (remoteParts[i] > 0) return true;
+              }
+          }
+           // If local is longer (1.2 vs 1.2.1), checking if extra part is > 0
+          if (localParts.length > remoteParts.length) {
+              for (int i = remoteParts.length; i < localParts.length; i++) {
+                  if (localParts[i] > 0) return false;
+              }
+          }
       }
 
-      // If versions are equal, check build number
+      // If semantic versions are effectively equal, check build number
       return remote.build > localBuild;
     } catch (e) {
       debugPrint('Error comparing versions: $e');

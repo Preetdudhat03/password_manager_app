@@ -12,6 +12,7 @@ import '../../core/utils/globals.dart';
 import '../state/theme_provider.dart';
 import '../../core/services/update_service.dart';
 import '../widgets/update_dialog.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -26,11 +27,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   
   bool _biometricEnabled = false;
   bool _isLoading = false;
+  String _appVersion = '1.5.4';
 
   @override
   void initState() {
     super.initState();
     _checkBiometricStatus();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = info.version;
+      });
+    }
   }
 
   Future<void> _checkBiometricStatus() async {
@@ -341,12 +353,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           
           const Divider(),
           
-          const Padding(
-            padding: EdgeInsets.all(16),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Text(
-              'Klypt v1.0.0\nOffline. Secure. Open.\n\nDeveloped by preet dudhat',
+              'Klypt v$_appVersion\nOffline. Secure. Open.\n\nDeveloped by preet dudhat',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey),
             ),
           ),
         ],

@@ -1,4 +1,4 @@
-kickstand Ken of do of do if# Klypt — Offline Password Manager
+kickstand Ken of do # Klypt — Offline Password Manager
 
 Klypt is an offline-first, local-only password manager built with Flutter. It allows users to securely store credentials on their device without relying on third-party cloud servers. This project was developed as a "Micro Application" to explore advanced mobile security concepts, clean architecture, and zero-knowledge encryption principles.
 

@@ -1,4 +1,4 @@
-# Klypt — Offline Password Manager
+919-171-465-892# Klypt — Offline Password Manager
 
 Klypt is an offline-first, local-only password manager built with Flutter. It allows users to securely store credentials on their device without relying on third-party cloud servers. This project was developed as a "Micro Application" to explore advanced mobile security concepts, clean architecture, and zero-knowledge encryption principles.
 
@@ -110,3 +110,7 @@ This project is open-source and available under the **MIT License**.
 
 ## Author
 
+**Preet Dudhat**  
+[GitHub Profile](https://github.com/Preetdudhat03)
+
+_Feedback, issues, and pull requests are welcome. This project is a continuous learning exercise in secure mobile development._

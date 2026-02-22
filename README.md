@@ -110,3 +110,7 @@ This project is open-source and available under the **MIT License**.
 
 ## Author
 
+**Preet Dudhat**  
+[GitHub Profile](https://github.com/Preetdudhat03)
+
+_Feedback, issues, and pull requests are welcome. This project is a continuous learning exercise in secure mobile development._
